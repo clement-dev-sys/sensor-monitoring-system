@@ -1,0 +1,48 @@
+```
+
+** Contenu :**
+```
+
+# Biniaires
+*.o
+*.out
+*.exe
+server/server
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+*.egg-info/
+
+# PlatformIO
+.pio/
+.vscode/
+.clang_complete
+.gcc-flags.json
+
+# BDD
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Système
+.DS_Store
+*~
+*.swp
+*.swo
+
+# IDE
+.idea/
+*.code-workspace
+
+# Credentials
+config.h
+secrets.h
+*.key
+*.pem
