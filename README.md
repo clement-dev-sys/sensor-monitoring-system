@@ -1,6 +1,6 @@
 # Sensor Monitoring System
 
-Systeème embarqué de monitoring environnemental avec ESP32, transmission Ethernet avec W5500 et interface graphique temps réel.
+Système embarqué de monitoring environnemental avec ESP32, transmission Ethernet avec W5500 et interface graphique temps réel.
 
 ## Objectifs
 
@@ -25,3 +25,7 @@ Acquisition temps réel de données environnementales : température, humidité,
 ## Etat du projet
 
 En cours de développement...
+
+## Licence
+
+MIT
