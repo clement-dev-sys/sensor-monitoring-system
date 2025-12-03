@@ -12,11 +12,14 @@ venv/
 env/
 *.egg-info/
 
-# PlatformIO
-.pio/
+# ArduinoIDE
+*.elf
+*.hex
+*.bin
+*.map
+build/
 .vscode/
-.clang_complete
-.gcc-flags.json
+.pio/
 
 # BDD
 *.db
@@ -31,6 +34,7 @@ env/
 *~
 *.swp
 *.swo
+Thumbs.db
 
 # IDE
 .idea/
