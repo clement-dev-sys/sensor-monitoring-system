@@ -9,7 +9,7 @@
 #define CLIENTID    "UnixSubscriber"
 #define TOPIC       "esp32/data"
 #define QOS         1
-#define DB_FILE     "donnees_esp32.db"
+#define DB_FILE     "/home/arch/projets/sensor-monitoring-system/data/donnees_esp32.db"
 
 sqlite3 *db;
 
@@ -25,10 +25,10 @@ int initDatabase() {
         "CREATE TABLE IF NOT EXISTS mesures ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
         "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,"
-        "nombre1 INTEGER,"
-        "nombre2 INTEGER,"
-        "nombre3 INTEGER,"
-        "nombre4 INTEGER"
+	"temperature REAL,"
+        "pression REAL,"
+        "humidite INTEGER,"
+        "luminosite REAL"
         ");";
     
     char *errMsg = 0;
@@ -44,11 +44,11 @@ int initDatabase() {
     return SQLITE_OK;
 }
 
-int insertData(int n1, int n2, int n3, int n4) {
+int insertData(float n1, float n2, int n3, float n4) {
     char sql[256];
     snprintf(sql, sizeof(sql),
-        "INSERT INTO mesures (nombre1, nombre2, nombre3, nombre4) "
-        "VALUES (%d, %d, %d, %d);",
+        "INSERT INTO mesures (temperature, pression, humidite, luminosite) "
+        "VALUES (%.2f, %.2f, %d, %.2f);",
         n1, n2, n3, n4);
     
     char *errMsg = 0;
@@ -70,16 +70,17 @@ int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_mess
     printf("Topic: %s\n", topicName);
     printf("Données: %.*s\n", message->payloadlen, payload);
     
-    int nombre1, nombre2, nombre3, nombre4;
+    float nombre1, nombre2, nombre4;
+    int nombre3;
     
-    if (sscanf(payload, "%d,%d,%d,%d", &nombre1, &nombre2, &nombre3, &nombre4) == 4) {
+    if (sscanf(payload, "%f,%f,%d,%f", &nombre1, &nombre2, &nombre3, &nombre4) == 4) {
         
         if (insertData(nombre1, nombre2, nombre3, nombre4) == SQLITE_OK) {
             printf("Enregistré dans la base:\n");
-            printf("  Nombre 1: %d\n", nombre1);
-            printf("  Nombre 2: %d\n", nombre2);
-            printf("  Nombre 3: %d\n", nombre3);
-            printf("  Nombre 4: %d\n", nombre4);
+            printf("  Temperature : %.1f\n", nombre1);
+            printf("  Pression : %.1f\n", nombre2);
+            printf("  Humidite : %d\n", nombre3);
+            printf("  Luminosite : %.1f\n", nombre4);
         } else {
             printf("Erreur enregistrement\n");
         }

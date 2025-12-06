@@ -86,13 +86,13 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     
-    int nombre1 = random(0, 10);
-    int nombre2 = random(10, 20);
-    int nombre3 = random(20, 30);
-    int nombre4 = random(30, 40);
+    float temp = random(100, 400) / 10.0;
+    float press = random(400, 700) / 10.0;
+    int hum = random(30, 90);
+    float lumi = random(0, 1000) / 10.0;
     
     char message[100];
-    snprintf(message, sizeof(message), "%d,%d,%d,%d", nombre1, nombre2, nombre3, nombre4);
+    snprintf(message, sizeof(message), "%.1f,%.1f,%d,%.1f", temp, press, hum, lumi);
     
     Serial.print("Envoi: ");
     Serial.println(message);
