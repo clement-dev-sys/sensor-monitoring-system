@@ -15,8 +15,9 @@ Acquisition temps réel de données environnementales : température, humidité,
 
 ## Structure
 ```
-|--- esp32/     # Code ESP32 (PlatformIO)
+|--- esp32/     # Code ESP32 (ArduinoIDE)
 |--- server/    # Serveur C de réception
+|--- data/      # Base de donnée (SQLite3)
 |--- gui/       # Interface graphique PyQt
 |--- scripts/   # Scripts utilitaires
 |--- docs/      # Documentation

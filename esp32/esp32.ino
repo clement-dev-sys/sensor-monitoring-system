@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 // ===== CONFIG W5500 =====
 #define ETH_CS    5
@@ -19,6 +20,7 @@ IPAddress subnet(255, 255, 255, 0);
 IPAddress mqttServer(192, 168, 69, 1);
 const int mqttPort = 1883;
 const char* mqttTopic = "esp32/data";
+const char* deviceId = "ESP32_001";
 
 EthernetClient ethClient;
 PubSubClient mqttClient(ethClient);
@@ -53,6 +55,8 @@ void setup() {
   
   Serial.print("IP ESP32 : ");
   Serial.println(Ethernet.localIP());
+  Serial.print("ID ESP32 : ");
+  Serial.println(deviceId);
   
   mqttClient.setServer(mqttServer, mqttPort);
   
@@ -86,23 +90,31 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     
-    float temp = random(100, 400) / 10.0;
-    float press = random(400, 700) / 10.0;
-    int hum = random(30, 90);
-    float lumi = random(0, 1000) / 10.0;
+    float temperature = random(100, 400) / 10.0;
+    float pression = random(9500, 10500) / 10.0;
+    int humidite = random(30, 90);
+    float luminosite = random(0, 1000) / 10.0;
+
+    unsigned long timestamp = millis() / 1000;
+
+    StaticJsonDocument<256> doc;
+    doc["device_id"] = deviceId;
+    doc["timestamp"] = timestamp;
+    doc["temperature"] = round(temperature * 10) / 10.0;
+    doc["pression"] = round(pression * 10) / 10.0;
+    doc["humidite"] = humidite;
+    doc["luminosite"] = round(luminosite * 10) / 10.0;
+
+    char jsonBuffer[256];
+    serializeJson(doc, jsonBuffer);
+        
+    Serial.print("=== Envoi ===");
+    Serial.println(jsonBuffer);
     
-    char message[100];
-    snprintf(message, sizeof(message), "%.1f,%.1f,%d,%.1f", temp, press, hum, lumi);
-    
-    Serial.print("Envoi: ");
-    Serial.println(message);
-    
-    if (mqttClient.publish(mqttTopic, message)) {
+    if (mqttClient.publish(mqttTopic, jsonBuffer)) {
       Serial.println("Envoyé");
     } else {
       Serial.println("Échec");
     }
-    
-    Serial.println();
   }
 }

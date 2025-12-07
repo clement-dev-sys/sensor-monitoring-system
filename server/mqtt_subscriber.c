@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <MQTTClient.h>
 #include <sqlite3.h>
+#include <json-c/json.h>
 
 #define ADDRESS     "tcp://localhost:1883"
 #define CLIENTID    "UnixSubscriber"
@@ -17,14 +18,15 @@ int initDatabase() {
     int rc = sqlite3_open(DB_FILE, &db);
     
     if (rc) {
-        fprintf(stderr, "Erreur ouverture DB: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Erreur ouverture DB : %s\n", sqlite3_errmsg(db));
         return rc;
     }
     
     const char *sql = 
         "CREATE TABLE IF NOT EXISTS mesures ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,"
+        "device_id TEXT,"
+	"timestamp INTEGER,"
 	"temperature REAL,"
         "pression REAL,"
         "humidite INTEGER,"
@@ -35,60 +37,94 @@ int initDatabase() {
     rc = sqlite3_exec(db, sql, 0, 0, &errMsg);
     
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Erreur création table: %s\n", errMsg);
+        fprintf(stderr, "Erreur création table : %s\n", errMsg);
         sqlite3_free(errMsg);
         return rc;
     }
     
-    printf("Base de données prête: %s\n", DB_FILE);
+    printf("Base de données prête : %s\n", DB_FILE);
     return SQLITE_OK;
 }
 
-int insertData(float n1, float n2, int n3, float n4) {
-    char sql[256];
+int insertData(const char* device_id, long timestamp, double temp, double press, int hum, double lux) {
+    char sql[512];
     snprintf(sql, sizeof(sql),
-        "INSERT INTO mesures (temperature, pression, humidite, luminosite) "
-        "VALUES (%.2f, %.2f, %d, %.2f);",
-        n1, n2, n3, n4);
+        "INSERT INTO mesures (device_id, timestamp, temperature, pression, humidite, luminosite) "
+        "VALUES ('%s', %ld, %.2f, %.2f, %d, %.2f);",
+        device_id, timestamp, temp, press, hum, lux);
     
     char *errMsg = 0;
     int rc = sqlite3_exec(db, sql, 0, 0, &errMsg);
     
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Erreur insertion: %s\n", errMsg);
+        fprintf(stderr, "Erreur insertion : %s\n", errMsg);
         sqlite3_free(errMsg);
         return rc;
     }
     
     return SQLITE_OK;
+}
+
+int parseAndStore(const char* jsonString) {
+    struct json_object *parsed_json;
+    struct json_object *device_id_obj, *timestamp_obj;
+    struct json_object *temp_obj, *press_obj, *hum_obj, *lux_obj;
+
+    parsed_json = json_tokener_parse(jsonString);
+
+    if (parsed_json == NULL) {
+        printf("Erreur parsing JSON\n");
+        return -1;
+    }
+
+    json_object_object_get_ex(parsed_json, "device_id", &device_id_obj);
+    json_object_object_get_ex(parsed_json, "timestamp", &timestamp_obj);
+    json_object_object_get_ex(parsed_json, "temperature", &temp_obj);
+    json_object_object_get_ex(parsed_json, "pression", &press_obj);
+    json_object_object_get_ex(parsed_json, "humidite", &hum_obj);
+    json_object_object_get_ex(parsed_json, "luminosite", &lux_obj);
+
+    if (!device_id_obj || !timestamp_obj || !temp_obj || !press_obj || !hum_obj || !lux_obj) {
+        printf("JSON incomplet\n");
+        json_object_put(parsed_json);
+        return -1;
+    }
+
+    const char* device_id = json_object_get_string(device_id_obj);
+    long timestamp = json_object_get_int64(timestamp_obj);
+    double temperature = json_object_get_double(temp_obj);
+    double pression = json_object_get_double(press_obj);
+    int humidite = json_object_get_int(hum_obj);
+    double luminosite = json_object_get_double(lux_obj);
+
+    printf("Données parsées :\n");
+    printf("  Device ID :    %s\n", device_id);
+    printf("  Timestamp :    %ld\n", timestamp);
+    printf("  Température :  %.1f°C\n", temperature);
+    printf("  Pression :     %.1f hPa\n", pression);
+    printf("  Humidité :     %d%%\n", humidite);
+    printf("  Luminosité :   %.1f lux\n", luminosite);
+
+    int result = insertData(device_id, timestamp, temperature, pression, humidite, luminosite);
+
+    if (result == SQLITE_OK) {
+        printf("Enregistré dans la base\n");
+    }
+
+    json_object_put(parsed_json);
+
+    return result;
 }
 
 int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     char *payload = (char *)message->payload;
     
     printf("\n=== Message reçu ===\n");
-    printf("Topic: %s\n", topicName);
-    printf("Données: %.*s\n", message->payloadlen, payload);
+    printf("Topic : %s\n", topicName);
+    printf("Données : %.*s\n", message->payloadlen, payload);
     
-    float nombre1, nombre2, nombre4;
-    int nombre3;
-    
-    if (sscanf(payload, "%f,%f,%d,%f", &nombre1, &nombre2, &nombre3, &nombre4) == 4) {
-        
-        if (insertData(nombre1, nombre2, nombre3, nombre4) == SQLITE_OK) {
-            printf("Enregistré dans la base:\n");
-            printf("  Temperature : %.1f\n", nombre1);
-            printf("  Pression : %.1f\n", nombre2);
-            printf("  Humidite : %d\n", nombre3);
-            printf("  Luminosite : %.1f\n", nombre4);
-        } else {
-            printf("Erreur enregistrement\n");
-        }
-        
-    } else {
-        printf("Format invalide (attendu: n1,n2,n3,n4)\n");
-    }
-    
+    parseAndStore(payload);    
+
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
     
@@ -96,14 +132,14 @@ int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_mess
 }
 
 void connectionLost(void *context, char *cause) {
-    printf("\nConnexion MQTT perdue: %s\n", cause);
+    printf("\nConnexion MQTT perdue : %s\n", cause);
 }
 
 int main() {
     MQTTClient client;
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
     
-    printf("=== Subscriber MQTT + SQLite ===\n");
+    printf("=== Subscriber MQTT ===\n");
     
     if (initDatabase() != SQLITE_OK) {
         exit(EXIT_FAILURE);
