@@ -22,7 +22,6 @@ build/
 .pio/
 
 # BDD
-*.db
 *.sqlite
 *.sqlite3
 
