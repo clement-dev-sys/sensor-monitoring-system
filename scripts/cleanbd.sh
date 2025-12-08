@@ -1,8 +1,8 @@
 #!/bin/bash
 # Supprime les mesures de plus de 3 heures
 
-DB_FILE="/home/arch/projets/sensor-monitoring-system/data/donnees_esp32.db"
-LOG_FILE="/home/arch/projets/sensor-monitoring-system/data/cleanup.log"
+DB_FILE="/home/arch/Projets/sensor-monitoring-system/data/donnees_esp32.db"
+LOG_FILE="/home/arch/Projets/sensor-monitoring-system/scripts/cleanbd.log"
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"

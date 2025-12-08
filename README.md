@@ -9,7 +9,7 @@ Acquisition temps réel de données environnementales : température, humidité,
 ## Technologies
 
 - **Embarqué** : ESP32, W5500, capteurs I2C
-- **Serveur** : C (sockets réseau, SQLite)
+- **Serveur** : C, MQTT
 - **Interface** : Python Qt5, matplotlib
 - **Système** : Arch Linux
 

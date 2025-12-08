@@ -60,7 +60,7 @@ void setup() {
   
   mqttClient.setServer(mqttServer, mqttPort);
   
-  Serial.println("Prêt à envoyer des données toutes les 20s\n");
+  Serial.println("Prêt à envoyer des données toutes les 20s");
 }
 
 void reconnectMQTT() {
@@ -95,11 +95,8 @@ void loop() {
     int humidite = random(30, 90);
     float luminosite = random(0, 1000) / 10.0;
 
-    unsigned long timestamp = millis() / 1000;
-
     StaticJsonDocument<256> doc;
     doc["device_id"] = deviceId;
-    doc["timestamp"] = timestamp;
     doc["temperature"] = round(temperature * 10) / 10.0;
     doc["pression"] = round(pression * 10) / 10.0;
     doc["humidite"] = humidite;
@@ -108,13 +105,13 @@ void loop() {
     char jsonBuffer[256];
     serializeJson(doc, jsonBuffer);
         
-    Serial.print("=== Envoi ===");
+    Serial.print("\n=== Envoi ===\n");
     Serial.println(jsonBuffer);
     
     if (mqttClient.publish(mqttTopic, jsonBuffer)) {
-      Serial.println("Envoyé");
+      Serial.println("=== Envoyé ===");
     } else {
-      Serial.println("Échec");
+      Serial.println("=== Échec ===");
     }
   }
 }
