@@ -25,9 +25,6 @@ build/
 *.sqlite
 *.sqlite3
 
-# Logs
-*.log
-
 # Système
 .DS_Store
 *~

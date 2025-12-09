@@ -3,6 +3,7 @@
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -12,16 +13,129 @@
 #define QOS 1
 #define DB_FILE                                                                \
   "/home/arch/Projets/sensor-monitoring-system/data/donnees_esp32.db"
+#define ALERT_FILE                                                             \
+  "/home/arch/Projets/sensor-monitoring-system/data/alertes.log"
+#define CONFIG_FILE "seuils.conf"
+
+typedef struct {
+  double temp_min, temp_max;
+  double press_min, press_max;
+  int hum_min, hum_max;
+  double lux_min, lux_max;
+} Seuils;
 
 sqlite3 *db;
+Seuils seuils;
 
 void getUTCTimestamp(char *buffer, size_t size) {
   time_t now = time(NULL);
-  struct tm *utc_time = gmtime(&now); // gmtime() = UTC
+  struct tm *utc_time = gmtime(&now);
   strftime(buffer, size, "%Y-%m-%d %H:%M:%S UTC", utc_time);
 }
 
 long getUnixTimestampUTC() { return (long)time(NULL); }
+
+int loadSeuils() {
+  FILE *f = fopen(CONFIG_FILE, "r");
+
+  char line[256];
+  char section[64] = "";
+
+  while (fgets(line, sizeof(line), f)) {
+    if (line[0] == '#' || line[0] == '\n')
+      continue;
+
+    if (line[0] == '[') {
+      sscanf(line, "[%63[^]]]", section);
+      continue;
+    }
+
+    char key[64];
+    double value;
+    if (sscanf(line, "%63s = %lf", key, &value) == 2) {
+      if (strcmp(section, "temperature") == 0) {
+        if (strcmp(key, "min") == 0)
+          seuils.temp_min = value;
+        if (strcmp(key, "max") == 0)
+          seuils.temp_max = value;
+      } else if (strcmp(section, "pression") == 0) {
+        if (strcmp(key, "min") == 0)
+          seuils.press_min = value;
+        if (strcmp(key, "max") == 0)
+          seuils.press_max = value;
+      } else if (strcmp(section, "humidite") == 0) {
+        if (strcmp(key, "min") == 0)
+          seuils.hum_min = (int)value;
+        if (strcmp(key, "max") == 0)
+          seuils.hum_max = (int)value;
+      } else if (strcmp(section, "luminosite") == 0) {
+        if (strcmp(key, "min") == 0)
+          seuils.lux_min = value;
+        if (strcmp(key, "max") == 0)
+          seuils.lux_max = value;
+      }
+    }
+  }
+
+  fclose(f);
+  printf("Seuils chargés depuis %s\n", CONFIG_FILE);
+  return 1;
+}
+
+void displaySeuils() {
+  printf("\nSeuils d'alerte configurés:\n");
+  printf("  Température : %.1f°C à %.1f°C\n", seuils.temp_min, seuils.temp_max);
+  printf("  Pression : %.1f à %.1f hPa\n", seuils.press_min, seuils.press_max);
+  printf("  Humidité : %d%% à %d%%\n", seuils.hum_min, seuils.hum_max);
+  printf("  Luminosité : %.1f à %.1f lux\n\n", seuils.lux_min, seuils.lux_max);
+}
+
+void logAlert(const char *device_id, const char *capteur, double valeur,
+              const char *type, double seuil) {
+  FILE *f = fopen(ALERT_FILE, "a");
+  if (!f) {
+    fprintf(stderr, "Erreur : impossible d'ouvrir %s\n", ALERT_FILE);
+    return;
+  }
+
+  char timeStr[64];
+  getUTCTimestamp(timeStr, sizeof(timeStr));
+
+  fprintf(f, "[%s] ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n",
+          timeStr, type, capteur, valeur, type, seuil, device_id);
+
+  fclose(f);
+
+  printf(" ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n", type,
+         capteur, valeur, seuil, device_id);
+}
+
+void checkSeuils(const char *device_id, double temp, double press, int hum,
+                 double lux) {
+  if (temp < seuils.temp_min) {
+    logAlert(device_id, "Température", temp, "MIN", seuils.temp_min);
+  } else if (temp > seuils.temp_max) {
+    logAlert(device_id, "Température", temp, "MAX", seuils.temp_max);
+  }
+
+  if (press < seuils.press_min) {
+    logAlert(device_id, "Pression", press, "MIN", seuils.press_min);
+  } else if (press > seuils.press_max) {
+    logAlert(device_id, "Pression", press, "MAX", seuils.press_max);
+  }
+
+  if (hum < seuils.hum_min) {
+    logAlert(device_id, "Humidité", (double)hum, "MIN", (double)seuils.hum_min);
+  } else if (hum > seuils.hum_max) {
+    logAlert(device_id, "Humidité", (double)hum, "MAX", (double)seuils.hum_max);
+  }
+
+  if (lux < seuils.lux_min) {
+    logAlert(device_id, "Luminosité", lux, "MIN", seuils.lux_min);
+  } else if (lux > seuils.lux_max) {
+    logAlert(device_id, "Luminosité", lux, "MAX", seuils.lux_max);
+  }
+}
 
 int initDatabase() {
   int rc = sqlite3_open(DB_FILE, &db);
