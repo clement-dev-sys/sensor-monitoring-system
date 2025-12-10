@@ -15,7 +15,8 @@
   "/home/arch/Projets/sensor-monitoring-system/data/donnees_esp32.db"
 #define ALERT_FILE                                                             \
   "/home/arch/Projets/sensor-monitoring-system/data/alertes.log"
-#define CONFIG_FILE "seuils.conf"
+#define CONFIG_FILE                                                            \
+  "/home/arch/Projets/sensor-monitoring-system/server/seuils.conf"
 
 typedef struct {
   double temp_min, temp_max;
@@ -106,8 +107,8 @@ void logAlert(const char *device_id, const char *capteur, double valeur,
 
   fclose(f);
 
-  printf(" ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n", type,
-         capteur, valeur, seuil, device_id);
+  printf("ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n", type,
+         capteur, valeur, type, seuil, device_id);
 }
 
 void checkSeuils(const char *device_id, double temp, double press, int hum,
@@ -183,7 +184,6 @@ int insertData(const char *device_id, double temp, double press, int hum,
            "luminosite) "
            "VALUES ('%s', '%s', %.2f, %.2f, %d, %.2f);",
            timestamp, device_id, temp, press, hum, lux);
-
   char *errMsg = 0;
   int rc = sqlite3_exec(db, sql, 0, 0, &errMsg);
 
@@ -232,6 +232,8 @@ int parseAndStore(const char *jsonString) {
   printf("  Humidité :     %d %%\n", humidite);
   printf("  Luminosité :   %.1f lux\n", luminosite);
 
+  checkSeuils(device_id, temperature, pression, humidite, luminosite);
+
   int result =
       insertData(device_id, temperature, pression, humidite, luminosite);
 
@@ -279,6 +281,9 @@ int main() {
   char current_time[64];
   getUTCTimestamp(current_time, sizeof(current_time));
   printf("Heure système UTC : %s\n\n", current_time);
+
+  loadSeuils();
+  displaySeuils();
 
   if (initDatabase() != SQLITE_OK) {
     exit(EXIT_FAILURE);

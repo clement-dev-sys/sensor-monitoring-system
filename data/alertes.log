@@ -1,0 +1,3 @@
+[2025-12-10 03:26:43 UTC] ALERTE MIN : Température = 15.8 (seuil MIN : 20.0) | Device : ESP32_001
+[2025-12-10 03:27:03 UTC] ALERTE MAX : Humidité = 88.0 (seuil MAX : 70.0) | Device : ESP32_001
+[2025-12-10 03:27:03 UTC] ALERTE MAX : Luminosité = 84.8 (seuil MAX : 80.0) | Device : ESP32_001
