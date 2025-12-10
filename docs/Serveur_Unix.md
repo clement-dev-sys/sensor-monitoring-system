@@ -1,0 +1,204 @@
+# Documentation Serveur Unix (Subscriber MQTT + SQLite)
+
+## Vue d'ensemble
+
+Le serveur Unix reçoit les données MQTT de l'ESP32, vérifie les seuils d'alerte, et stocke tout dans une base SQLite.
+
+---
+
+## Architecture
+
+```
+ESP32 -- MQTT -- Broker Mosquitto -- MQTT -- Subscriber -- SQLite
+                 (localhost:1883)            (C program)   (data/)
+                                                |
+                                                |--- Alertes (alertes.log)
+```
+
+---
+
+## Structure des dossiers
+
+```
+projet/
+├── server/
+│   ├── mqtt_subscriber.c       # Code source
+│   ├── mqtt_subscriber         # Exécutable compilé
+│   └── seuils.conf             # Configuration des seuils
+├── data/
+│   ├── donnees_esp32.db        # Base SQLite
+│   └── alertes.log             # Log des alertes
+└── scripts/
+    ├── cleanup.sh              # Nettoyage auto (> 3h)
+    └── cleanup.log             # Log du nettoyage
+```
+
+---
+
+## Installation
+
+### Dépendances (Arch Linux)
+```bash
+sudo pacman -S mosquitto paho-mqtt-c sqlite json-c gcc make
+```
+
+### Broker MQTT (Mosquitto)
+
+**Configuration :**
+```bash
+sudo nano /etc/mosquitto/mosquitto.conf
+```
+
+Contenu minimal :
+```
+listener 1883
+allow_anonymous true
+```
+
+---
+
+## Compilation
+
+```bash
+cd server/
+./make
+```
+
+---
+
+## Configuration des seuils
+
+Fichier : `server/seuils.conf`
+
+```ini
+[temperature]
+min = 20.0
+max = 35.0
+description = Température
+
+[pression]
+min = 980.0
+max = 1030.0
+description = Pression atmosphérique
+
+[humidite]
+min = 40
+max = 70
+description = Humidité
+
+[luminosite]
+min = 0.0
+max = 80.0
+description = Luminosité
+```
+
+**Modifier les seuils** : Éditer le fichier et relancer le subscriber.
+
+---
+
+## 🚀 Utilisation
+
+### Lancer le subscriber
+```bash
+cd server/
+./mqtt_subscriber
+```
+
+**Sortie attendue :**
+TODO
+
+---
+
+## Base de données SQLite
+
+### Structure de la table
+
+```sql
+CREATE TABLE mesures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Timestamp TEXT NOT NULL,        -- UTC : "2024-12-08 14:33:54"
+    device_id TEXT NOT NULL,        -- "ESP32_001"
+    temperature REAL,               -- °C
+    pression REAL,                  -- hPa
+    humidite INTEGER,               -- %
+    luminosite REAL                 -- lux
+);
+```
+
+---
+
+## Fichier d'alertes
+
+Fichier : `data/alertes.log`
+
+**Format :**
+```
+[2025-12-08 14:33:54 UTC] ALERTE MAX : Température = 38.5 (seuil MAX : 35.0) | Device : ESP32_001
+[2025-12-08 14:34:14 UTC] ALERTE MIN : Humidité = 18.0 (seuil MIN : 20.0) | Device : ESP32_001
+```
+
+**Consulter :**
+```bash
+# Voir toutes les alertes
+cat data/alertes.log
+
+# Suivre en temps réel
+tail -f data/alertes.log
+```
+
+---
+
+## Nettoyage automatique
+
+### Script : `scripts/cleanup.sh`
+
+Supprime automatiquement les données de plus de **3 heures**.
+
+**Utilisation manuelle :**
+```bash
+cd scripts/
+./cleanup.sh
+```
+
+**Utilisation automatique :**
+```bash
+crontab -e
+```
+
+Ajouter :
+```
+# Exécuter toutes les heures
+0 * * * * cd /chemin/vers/projet/scripts && ./cleanup.sh
+```
+
+**Log du nettoyage :**
+```bash
+cat scripts/cleanup.log
+```
+
+---
+
+### Réinitialiser la base
+
+```bash
+# Sauvegarder d'abord
+cp data/donnees_esp32.db data/backup_$(date +%Y%m%d).db
+
+# Supprimer
+m data/donnees_esp32.db
+
+# Relancer le subscriber (recrée auto)
+cd server/
+./mqtt_subscriber
+```
+
+### Réinitialiser les alertes
+
+```bash
+# Archiver
+mv data/alertes.log data/alertes_archive_$(date +%Y%m%d).log
+
+# Le fichier sera recréé au prochain dépassement de seuil
+```
+
+---
