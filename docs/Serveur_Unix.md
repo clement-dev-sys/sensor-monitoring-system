@@ -1,4 +1,4 @@
-# Documentation Serveur Unix (Subscriber MQTT + SQLite)
+# Documentation Serveur Unix
 
 ## Vue d'ensemble
 
@@ -61,7 +61,7 @@ allow_anonymous true
 
 ```bash
 cd server/
-./make
+./make.sh
 ```
 
 ---
@@ -116,7 +116,7 @@ TODO
 ```sql
 CREATE TABLE mesures (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    Timestamp TEXT NOT NULL,        -- UTC : "2024-12-08 14:33:54"
+    timestamp TEXT NOT NULL,        -- UTC : "2024-12-08 14:33:54"
     device_id TEXT NOT NULL,        -- "ESP32_001"
     temperature REAL,               -- °C
     pression REAL,                  -- hPa
@@ -134,7 +134,7 @@ Fichier : `data/alertes.log`
 **Format :**
 ```
 [2025-12-08 14:33:54 UTC] ALERTE MAX : Température = 38.5 (seuil MAX : 35.0) | Device : ESP32_001
-[2025-12-08 14:34:14 UTC] ALERTE MIN : Humidité = 18.0 (seuil MIN : 20.0) | Device : ESP32_001
+[2025-12-08 14:34:14 UTC] ALERTE MIN : Humidité = 28.0 (seuil MIN : 40.0) | Device : ESP32_001
 ```
 
 **Consulter :**
@@ -163,10 +163,8 @@ cd scripts/
 **Utilisation automatique :**
 ```bash
 crontab -e
-```
 
-Ajouter :
-```
+# Ajouter :
 # Exécuter toutes les heures
 0 * * * * cd /chemin/vers/projet/scripts && ./cleanup.sh
 ```

@@ -38,11 +38,10 @@ TODO
 
 ## Logiciels requis
 
-### Arduino IDE
-
-### Support ESP32
+### PlatformIO
 
 ### Bibliothèques nécessaires
+
 - Ethernet - Pour W5500
 - PubSubClient - Pour MQTT
 - ArduinoJson - Pour JSON
