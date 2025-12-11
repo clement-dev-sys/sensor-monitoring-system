@@ -37,7 +37,6 @@ Thumbs.db
 *.code-workspace
 
 # Credentials
-config.h
 secrets.h
 *.key
 *.pem
