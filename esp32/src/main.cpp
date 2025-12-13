@@ -1,14 +1,21 @@
-#include "config.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <Ethernet.h>
 #include <PubSubClient.h>
 #include <SPI.h>
 
+// ===== CONFIG W5500 =====
+#define ETH_CS 5
+#define ETH_MOSI 23
+#define ETH_MISO 19
+#define ETH_SCK 18
+#define ETH_RST 4
+
 // ===== CONFIG RÉSEAU =====
-IPAddress ip(IP_ESP32);
-IPAddress gateway(IP_GATEWAY);
-IPAddress subnet(IP_SUBNET);
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+IPAddress ip(192, 168, 69, 2);
+IPAddress gateway(192, 168, 69, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 // ===== CONFIG MQTT =====
 IPAddress mqttServer(192, 168, 69, 1);

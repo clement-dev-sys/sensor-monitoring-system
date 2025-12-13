@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-L'ESP32 collecte des données environnementales (température, pression, humidité, luminosité) et les envoie via MQTT toutes les 20 secondes.
+L'ESP32 collecte des données environnementales (température, pression, humidité, luminosité) via des capteurs I2C et envoie les données via MQTT toutes les 20 secondes vers le serveur Unix.
 
 ---
 
@@ -45,6 +45,7 @@ TODO
 - Ethernet - Pour W5500
 - PubSubClient - Pour MQTT
 - ArduinoJson - Pour JSON
+- TODO
 
 ---
 
@@ -53,7 +54,7 @@ TODO
 ```cpp
 // Configuration réseau
 IPAddress ip(192, 168, 69, 2);              // IP de l'ESP32
-IPAddress gateway(192, 168, 69, 1);         // IP de votre routeur
+IPAddress gateway(192, 168, 69, 1);         // IP du PC serveur
 IPAddress mqttServer(192, 168, 69, 1);      // IP du PC serveur
 
 // Configuration MQTT

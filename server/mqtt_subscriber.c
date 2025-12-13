@@ -31,7 +31,7 @@ Seuils seuils;
 void getUTCTimestamp(char *buffer, size_t size) {
   time_t now = time(NULL);
   struct tm *utc_time = gmtime(&now);
-  strftime(buffer, size, "%Y-%m-%d %H:%M:%S UTC", utc_time);
+  strftime(buffer, size, "%Y-%m-%d %H:%M:%S", utc_time);
 }
 
 long getUnixTimestampUTC() { return (long)time(NULL); }
@@ -85,14 +85,13 @@ int loadSeuils() {
 
 void displaySeuils() {
   printf("\nSeuils d'alerte configurés:\n");
-  printf("  Température : %.1f°C à %.1f°C\n", seuils.temp_min, seuils.temp_max);
-  printf("  Pression : %.1f à %.1f hPa\n", seuils.press_min, seuils.press_max);
-  printf("  Humidité : %d%% à %d%%\n", seuils.hum_min, seuils.hum_max);
-  printf("  Luminosité : %.1f à %.1f lux\n\n", seuils.lux_min, seuils.lux_max);
+  printf("Température : %.1f°C à %.1f°C\n", seuils.temp_min, seuils.temp_max);
+  printf("Pression : %.1f à %.1f hPa\n", seuils.press_min, seuils.press_max);
+  printf("Humidité : %d%% à %d%%\n", seuils.hum_min, seuils.hum_max);
+  printf("Luminosité : %.1f à %.1f lux\n\n", seuils.lux_min, seuils.lux_max);
 }
 
-void logAlert(const char *device_id, const char *capteur, double valeur,
-              const char *type, double seuil) {
+void logAlert(const char *device_id, const char *capteur, double valeur, const char *type, double seuil) {
   FILE *f = fopen(ALERT_FILE, "a");
   if (!f) {
     fprintf(stderr, "Erreur : impossible d'ouvrir %s\n", ALERT_FILE);
@@ -102,17 +101,14 @@ void logAlert(const char *device_id, const char *capteur, double valeur,
   char timeStr[64];
   getUTCTimestamp(timeStr, sizeof(timeStr));
 
-  fprintf(f, "[%s] ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n",
-          timeStr, type, capteur, valeur, type, seuil, device_id);
+  fprintf(f, "[%s] ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n", timeStr, type, capteur, valeur, type, seuil, device_id);
 
   fclose(f);
 
-  printf("ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n", type,
-         capteur, valeur, type, seuil, device_id);
+  printf("ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n", type, capteur, valeur, type, seuil, device_id);
 }
 
-void checkSeuils(const char *device_id, double temp, double press, int hum,
-                 double lux) {
+void checkSeuils(const char *device_id, double temp, double press, int hum, double lux) {
   if (temp < seuils.temp_min) {
     logAlert(device_id, "Température", temp, "MIN", seuils.temp_min);
   } else if (temp > seuils.temp_max) {
@@ -146,7 +142,7 @@ int initDatabase() {
     return rc;
   }
 
-  const char *sql = "CREATE TABLE IF NOT EXISTS mesures ("
+  const char *sql = "CREATE TABLE IF NOT EXISTS values ("
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     "timestamp TEXT NOT NULL,"
                     "device_id TEXT NOT NULL,"
@@ -169,8 +165,7 @@ int initDatabase() {
   return SQLITE_OK;
 }
 
-int insertData(const char *device_id, double temp, double press, int hum,
-               double lux) {
+int insertData(const char *device_id, double temp, double press, int hum, double lux) {
   char sql[512];
 
   char timestamp[64];
@@ -179,11 +174,9 @@ int insertData(const char *device_id, double temp, double press, int hum,
   strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", utc_time);
 
   snprintf(sql, sizeof(sql),
-           "INSERT INTO mesures (timestamp, device_id, temperature, pression, "
-           "humidite, "
-           "luminosite) "
-           "VALUES ('%s', '%s', %.2f, %.2f, %d, %.2f);",
-           timestamp, device_id, temp, press, hum, lux);
+          "INSERT INTO values (timestamp, device_id, temperature, pression, humidite, luminosite)",
+          "VALUES ('%s', '%s', %.2f, %.2f, %d, %.2f);",
+          timestamp, device_id, temp, press, hum, lux);
   char *errMsg = 0;
   int rc = sqlite3_exec(db, sql, 0, 0, &errMsg);
 
@@ -226,16 +219,15 @@ int parseAndStore(const char *jsonString) {
   double luminosite = json_object_get_double(lux_obj);
 
   printf("Données parsées :\n");
-  printf("  Device ID :    %s\n", device_id);
-  printf("  Température :  %.1f °C\n", temperature);
-  printf("  Pression :     %.1f hPa\n", pression);
-  printf("  Humidité :     %d %%\n", humidite);
-  printf("  Luminosité :   %.1f lux\n", luminosite);
+  printf("Device ID : %s\n", device_id);
+  printf("Température : %.1f °C\n", temperature);
+  printf("Pression : %.1f hPa\n", pression);
+  printf("Humidité : %d %%\n", humidite);
+  printf("Luminosité : %.1f lux\n", luminosite);
 
   checkSeuils(device_id, temperature, pression, humidite, luminosite);
 
-  int result =
-      insertData(device_id, temperature, pression, humidite, luminosite);
+  int result = insertData(device_id, temperature, pression, humidite, luminosite);
 
   if (result == SQLITE_OK) {
     printf("=== Message enregistré ===\n");
@@ -245,8 +237,7 @@ int parseAndStore(const char *jsonString) {
   return result;
 }
 
-int messageArrived(void *context, char *topicName, int topicLen,
-                   MQTTClient_message *message) {
+int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
   char *payload = (char *)message->payload;
 
   printf("\n=== Message reçu ===\n");
@@ -289,8 +280,7 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  MQTTClient_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE,
-                    NULL);
+  MQTTClient_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
   MQTTClient_setCallbacks(client, NULL, connectionLost, messageArrived, NULL);
 
   conn_opts.keepAliveInterval = 20;
