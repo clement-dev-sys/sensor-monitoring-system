@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le serveur Unix reçoit les données MQTT de l'ESP32, vérifie les seuils d'alerte, et stocke tout dans une base SQLite.
+Le serveur Unix reçoit les données MQTT de l'ESP32, vérifie les seuils d'alerte, et stocke tout dans une base de données SQLite.
 
 ---
 
@@ -10,7 +10,7 @@ Le serveur Unix reçoit les données MQTT de l'ESP32, vérifie les seuils d'aler
 
 ```
 ESP32 -- MQTT -- Broker Mosquitto -- MQTT -- Subscriber -- SQLite
-                 (localhost:1883)            (C program)   (data/)
+                 (localhost:1883)           (Unix server)  (data/)
                                                 |
                                                 |--- Alertes (alertes.log)
 ```
@@ -21,16 +21,16 @@ ESP32 -- MQTT -- Broker Mosquitto -- MQTT -- Subscriber -- SQLite
 
 ```
 projet/
-├── server/
-│   ├── mqtt_subscriber.c       # Code source
-│   ├── mqtt_subscriber         # Exécutable compilé
-│   └── seuils.conf             # Configuration des seuils
-├── data/
-│   ├── donnees_esp32.db        # Base SQLite
-│   └── alertes.log             # Log des alertes
-└── scripts/
-    ├── cleanup.sh              # Nettoyage auto (> 3h)
-    └── cleanup.log             # Log du nettoyage
+|-- server/
+│     |-- mqtt_subscriber.c       # Code source
+│     |-- mqtt_subscriber         # Exécutable compilé
+│     |-- seuils.conf             # Configuration des seuils
+|-- data/
+│     |-- donnees_esp32.db        # Base SQLite
+│     |-- alertes.log             # Log des alertes
+|--scripts/
+      |-- cleanup.sh              # Nettoyage auto (> 3h)
+      |-- cleanup.log             # Log du nettoyage
 ```
 
 ---
@@ -114,9 +114,9 @@ TODO
 ### Structure de la table
 
 ```sql
-CREATE TABLE mesures (
+CREATE TABLE values (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp TEXT NOT NULL,        -- UTC : "2024-12-08 14:33:54"
+    timestamp TEXT NOT NULL,        -- UTC : "2025-12-08 14:33:54"
     device_id TEXT NOT NULL,        -- "ESP32_001"
     temperature REAL,               -- °C
     pression REAL,                  -- hPa
@@ -133,8 +133,8 @@ Fichier : `data/alertes.log`
 
 **Format :**
 ```
-[2025-12-08 14:33:54 UTC] ALERTE MAX : Température = 38.5 (seuil MAX : 35.0) | Device : ESP32_001
-[2025-12-08 14:34:14 UTC] ALERTE MIN : Humidité = 28.0 (seuil MIN : 40.0) | Device : ESP32_001
+[2025-12-08 14:33:54] ALERTE MAX : Température = 38.5 (seuil MAX : 35.0) | Device : ESP32_001
+[2025-12-08 14:34:14] ALERTE MIN : Humidité = 28.0 (seuil MIN : 40.0) | Device : ESP32_001
 ```
 
 **Consulter :**
@@ -166,12 +166,12 @@ crontab -e
 
 # Ajouter :
 # Exécuter toutes les heures
-0 * * * * cd /chemin/vers/projet/scripts && ./cleanup.sh
+0 * * * * ./home/arch/Projets/sensor-monitoring-system/scripts/cleandb.sh
 ```
 
 **Log du nettoyage :**
 ```bash
-cat scripts/cleanup.log
+cat scripts/cleandb.log
 ```
 
 ---
@@ -183,7 +183,7 @@ cat scripts/cleanup.log
 cp data/donnees_esp32.db data/backup_$(date +%Y%m%d).db
 
 # Supprimer
-m data/donnees_esp32.db
+rm data/donnees_esp32.db
 
 # Relancer le subscriber (recrée auto)
 cd server/
