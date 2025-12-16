@@ -3,7 +3,8 @@
 *.exe
 *.out
 *.app
-mqtt_subscriber
+**/mqtt_subscriber
+**/subscriber
 
 # Fichiers objets
 *.o
@@ -47,10 +48,6 @@ lib/
 # Logs et alertes
 *.log
 alertes.log
-
-# Dossier data
-data/
-!data/.gitkeep
 
 # ===== CONFIGURATION =====
 # Fichiers de configuration sensibles
