@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-L'ESP32 collecte des données environnementales (température, pression, humidité, luminosité) via des capteurs I2C et envoie les données via MQTT toutes les 20 secondes vers le serveur Unix.
+L'ESP32 collecte des données environnementales (température, pression, humidité) via un capteur BME280 et envoie les données via MQTT toutes les 20 secondes vers le serveur Unix.
 
 ---
 
@@ -11,7 +11,6 @@ L'ESP32 collecte des données environnementales (température, pression, humidit
 - **ESP32 DevKit V1**
 - **Module W5500**
 - **Capteur BME280**
-- **Capteur BH1750**
 - **Câbles de connexion Dupont**
 - **Câble Ethernet**
 - **Câble USB**
@@ -29,14 +28,19 @@ L'ESP32 collecte des données environnementales (température, pression, humidit
 | RST   | 4          | Reset        |
 
 ### Câblage BME280 - ESP32
-TODO
 
-### Câblage BH1750 - ESP32
-TODO
+| BME280 | ESP32 GPIO | Description  |
+|--------|------------|--------------|
+| VCC    | 3.3V       | Alimentation |
+| GND    | GND        | Masse        |
+| SCL    | 22         | I2C Clock    |
+| SDA    | 21         | I2C Data     |
 
 ---
 
 ## Logiciels requis
+
+### Visual Studio Code
 
 ### PlatformIO
 
@@ -45,7 +49,7 @@ TODO
 - Ethernet - Pour W5500
 - PubSubClient - Pour MQTT
 - ArduinoJson - Pour JSON
-- TODO
+- TODO - Pour BME280
 
 ---
 
@@ -73,7 +77,6 @@ const long interval = 20000;              // Fréquence (20s)
   "temperature": 22.5,
   "pression": 1013.2,
   "humidite": 65,
-  "luminosite": 45.3
 }
 ```
 

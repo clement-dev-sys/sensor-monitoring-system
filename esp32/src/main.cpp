@@ -1,23 +1,11 @@
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include <Ethernet.h>
-#include <PubSubClient.h>
-#include <SPI.h>
+#include "main.h"
 
-// ===== CONFIG W5500 =====
-#define ETH_CS 5
-#define ETH_MOSI 23
-#define ETH_MISO 19
-#define ETH_SCK 18
-#define ETH_RST 4
-
-// ===== CONFIG RÉSEAU =====
+// ===== DÉFINITION DES VARIABLES GLOBALES =====
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress ip(192, 168, 69, 2);
 IPAddress gateway(192, 168, 69, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-// ===== CONFIG MQTT =====
 IPAddress mqttServer(192, 168, 69, 1);
 const int mqttPort = 1883;
 const char *mqttTopic = "esp32/data";
@@ -26,16 +14,12 @@ const char *deviceId = "ESP32_001";
 EthernetClient ethClient;
 PubSubClient mqttClient(ethClient);
 
-// ===== DÉLAI =====
 unsigned long previousMillis = 0;
 const long interval = 20000; // 20 secondes
 
-void setup() {
-  Serial.begin(115200);
-  delay(1000);
+// ===== IMPLÉMENTATION DES FONCTIONS =====
 
-  Serial.println("\n=== ESP32 Publisher MQTT ===");
-
+void initEthernet() {
   pinMode(ETH_RST, OUTPUT);
   digitalWrite(ETH_RST, LOW);
   delay(100);
@@ -54,15 +38,17 @@ void setup() {
     while (true)
       delay(1);
   }
+}
 
+void setupMQTT() {
+  mqttClient.setServer(mqttServer, mqttPort);
+}
+
+void displayNetworkInfo() {
   Serial.print("IP ESP32 : ");
   Serial.println(Ethernet.localIP());
   Serial.print("ID ESP32 : ");
   Serial.println(deviceId);
-
-  mqttClient.setServer(mqttServer, mqttPort);
-
-  Serial.println("Prêt à envoyer des données toutes les 20s");
 }
 
 void reconnectMQTT() {
@@ -80,40 +66,57 @@ void reconnectMQTT() {
   }
 }
 
+bool sendSensorData() {
+  float temperature = random(100, 400) / 10.0;
+  float pression = random(9500, 10500) / 10.0;
+  int humidite = random(30, 90);
+
+  StaticJsonDocument<256> doc;
+  doc["device_id"] = deviceId;
+  doc["temperature"] = round(temperature * 10) / 10.0;
+  doc["pression"] = round(pression * 10) / 10.0;
+  doc["humidite"] = humidite;
+
+  char jsonBuffer[256];
+  serializeJson(doc, jsonBuffer);
+
+  Serial.print("\n=== Envoi ===\n");
+  Serial.println(jsonBuffer);
+
+  if (mqttClient.publish(mqttTopic, jsonBuffer)) {
+    Serial.println("=== Envoyé ===");
+    return true;
+  } else {
+    Serial.println("=== Échec ===");
+    return false;
+  }
+}
+
+// ===== SETUP ET LOOP =====
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  Serial.println("\n=== ESP32 Publisher MQTT ===");
+
+  initEthernet();
+  displayNetworkInfo();
+  setupMQTT();
+
+  Serial.println("Prêt à envoyer des données toutes les 20s");
+}
+
 void loop() {
   if (!mqttClient.connected()) {
     reconnectMQTT();
   }
   mqttClient.loop();
 
-  // Envoyer données toutes les 20 secondes
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-
-    float temperature = random(100, 400) / 10.0;
-    float pression = random(9500, 10500) / 10.0;
-    int humidite = random(30, 90);
-    float luminosite = random(0, 1000) / 10.0;
-
-    StaticJsonDocument<256> doc;
-    doc["device_id"] = deviceId;
-    doc["temperature"] = round(temperature * 10) / 10.0;
-    doc["pression"] = round(pression * 10) / 10.0;
-    doc["humidite"] = humidite;
-    doc["luminosite"] = round(luminosite * 10) / 10.0;
-
-    char jsonBuffer[256];
-    serializeJson(doc, jsonBuffer);
-
-    Serial.print("\n=== Envoi ===\n");
-    Serial.println(jsonBuffer);
-
-    if (mqttClient.publish(mqttTopic, jsonBuffer)) {
-      Serial.println("=== Envoyé ===");
-    } else {
-      Serial.println("=== Échec ===");
-    }
+    sendSensorData();
   }
 }

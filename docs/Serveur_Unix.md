@@ -22,7 +22,9 @@ ESP32 -- MQTT -- Broker Mosquitto -- MQTT -- Subscriber -- SQLite
 ```
 projet/
 |-- server/
+|     |-- make.sh                 # Script de compilation
 │     |-- mqtt_subscriber.c       # Code source
+|     |-- mqtt_subscriber.h       # Header
 │     |-- mqtt_subscriber         # Exécutable compilé
 │     |-- seuils.conf             # Configuration des seuils
 |-- data/
@@ -72,8 +74,8 @@ Fichier : `server/seuils.conf`
 
 ```ini
 [temperature]
-min = 20.0
-max = 35.0
+min = 15.0
+max = 30.0
 description = Température
 
 [pression]
@@ -85,11 +87,6 @@ description = Pression atmosphérique
 min = 40
 max = 70
 description = Humidité
-
-[luminosite]
-min = 0.0
-max = 80.0
-description = Luminosité
 ```
 
 **Modifier les seuils** : Éditer le fichier et relancer le subscriber.
@@ -114,14 +111,13 @@ TODO
 ### Structure de la table
 
 ```sql
-CREATE TABLE values (
+CREATE TABLE mesures (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp TEXT NOT NULL,        -- UTC : "2025-12-08 14:33:54"
     device_id TEXT NOT NULL,        -- "ESP32_001"
     temperature REAL,               -- °C
     pression REAL,                  -- hPa
     humidite INTEGER,               -- %
-    luminosite REAL                 -- lux
 );
 ```
 

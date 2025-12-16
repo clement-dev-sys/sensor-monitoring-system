@@ -1,21 +1,21 @@
 # Sensor Monitoring System
 
-Système embarqué de monitoring environnemental avec : ESP32 et Capteurs I2C, transmission Ethernet avec W5500 et interface graphique temps réel.
+Système embarqué de monitoring environnemental avec : ESP32 et Capteur BME280, transmission Ethernet avec W5500 et interface graphique temps réel.
 
 ## Objectifs
 
-Acquisition temps réel de données environnementales : température, humidité, pression et luminosité. Puis transmission réseau et visualisation des données.
+Acquisition en temps réel de données environnementales : température, humidité, pression. Puis transmission réseau et visualisation des données.
 
 ## Technologies
 
-- **Embarqué** : ESP32, W5500, capteurs I2C
+- **Embarqué** : ESP32, W5500, capteur BME280, C++
 - **Serveur** : C, MQTT, SQLite3
 - **Interface** : Python Qt5, matplotlib
 - **Système** : Arch Linux
 
 ## Structure
 ```
-|--- esp32/     # Code ESP32 (PlatformIO)
+|--- esp32/     # Code C++ ESP32 (PlatformIO)
 |--- server/    # Serveur C de réception
 |--- data/      # Base de donnée (SQLite3)
 |--- gui/       # Interface graphique (PyQt5)
