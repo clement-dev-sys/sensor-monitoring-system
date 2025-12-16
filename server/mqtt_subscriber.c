@@ -12,11 +12,11 @@
 #define TOPIC "esp32/data"
 #define QOS 1
 #define DB_FILE                                                                \
-  "/home/arch/Projets/sensor-monitoring-system/data/donnees_esp32.db"
+  "/home/Arch/Projets/sensor-monitoring-system/data/donnees_esp32.db"
 #define ALERT_FILE                                                             \
-  "/home/arch/Projets/sensor-monitoring-system/data/alertes.log"
+  "/home/Arch/Projets/sensor-monitoring-system/data/alertes.log"
 #define CONFIG_FILE                                                            \
-  "/home/arch/Projets/sensor-monitoring-system/server/seuils.conf"
+  "/home/Arch/Projets/sensor-monitoring-system/server/seuils.conf"
 
 typedef struct {
   double temp_min, temp_max;
