@@ -1,2 +1,140 @@
-.pio
-.vscode
+# ===== FICHIERS COMPILÉS =====
+# Exécutables
+*.exe
+*.out
+*.app
+mqtt_subscriber
+
+# Fichiers objets
+*.o
+*.obj
+*.ko
+*.elf
+
+# Bibliothèques
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# ===== ESP32 / PLATFORMIO =====
+.pio/
+.vscode/
+.clang_complete
+.gcc-flags.json
+lib/
+.pioenvs/
+.piolibdeps/
+
+# Fichiers de build Arduino/PlatformIO
+*.bin
+*.hex
+*.map
+*.lss
+*.sym
+
+# ===== BASE DE DONNÉES ET LOGS =====
+# Base de données SQLite
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs et alertes
+*.log
+alertes.log
+
+# Dossier data
+data/
+!data/.gitkeep
+
+# ===== CONFIGURATION =====
+# Fichiers de configuration sensibles
+*.conf
+!seuils.conf
+credentials.txt
+secrets.h
+config.h
+
+# ===== ÉDITEURS ET IDE =====
+# VSCode
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# ===== SYSTÈME =====
+# Linux
+*~
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ===== FICHIERS TEMPORAIRES =====
+*.tmp
+*.temp
+*.bak
+*.backup
+*.cache
+
+# ===== COMPILATION C/C++ =====
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Make
+*.d
+.deps/
+
+# Autotools
+.deps/
+.libs/
+*.la
+*.lo
+Makefile.in
+aclocal.m4
+autom4te.cache/
+compile
+config.guess
+config.h.in
+config.log
+config.status
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+missing
+stamp-h1
+
+# ===== DÉPENDANCES =====
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+venv/
+env/
+.venv/
