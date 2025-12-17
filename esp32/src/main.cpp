@@ -13,9 +13,13 @@ const char *deviceId = "ESP32_001";
 
 EthernetClient ethClient;
 PubSubClient mqttClient(ethClient);
+Adafruit_BME280 bme;
 
 unsigned long previousMillis = 0;
 const long interval = 20000; // 20 secondes
+
+unsigned long lastReconnectAttempt = 0;
+const long reconnectInterval = 5000;
 
 // ===== IMPLÉMENTATION DES FONCTIONS =====
 
@@ -40,6 +44,36 @@ void initEthernet() {
   }
 }
 
+bool initBME280() {
+  Serial.println("Initialisation du BME280...");
+  
+  if (bme.begin(0x76)) {
+    Serial.println("BME280 détecté à l'adresse 0x76");
+    
+    bme.setSampling(Adafruit_BME280::MODE_FORCED,
+                    Adafruit_BME280::SAMPLING_X1,
+                    Adafruit_BME280::SAMPLING_X1,
+                    Adafruit_BME280::SAMPLING_X1,
+                    Adafruit_BME280::FILTER_OFF);
+    return true;
+  }
+  
+  if (bme.begin(0x77)) {
+    Serial.println("BME280 détecté à l'adresse 0x77");
+    
+    bme.setSampling(Adafruit_BME280::MODE_FORCED,
+                    Adafruit_BME280::SAMPLING_X1,
+                    Adafruit_BME280::SAMPLING_X1,
+                    Adafruit_BME280::SAMPLING_X1,
+                    Adafruit_BME280::FILTER_OFF);
+    return true;
+  }
+  
+  Serial.println("ERREUR: BME280 non détecté!");
+  Serial.println("Vérifiez le câblage I2C (SDA, SCL)");
+  return false;
+}
+
 void setupMQTT() {
   mqttClient.setServer(mqttServer, mqttPort);
 }
@@ -51,31 +85,46 @@ void displayNetworkInfo() {
   Serial.println(deviceId);
 }
 
-void reconnectMQTT() {
-  while (!mqttClient.connected()) {
-    Serial.print("Connexion au broker MQTT...");
+bool reconnectMQTT() {
+  // Reconnexion non-bloquante
+  if (!mqttClient.connected()) {
+    unsigned long now = millis();
+    
+    if (now - lastReconnectAttempt > reconnectInterval) {
+      lastReconnectAttempt = now;
+      Serial.print("Connexion au broker MQTT...");
 
-    if (mqttClient.connect("ESP32_Publisher")) {
-      Serial.println(" OK !");
-    } else {
-      Serial.print(" Échec (code ");
-      Serial.print(mqttClient.state());
-      Serial.println("). Nouvelle tentative dans 5s");
-      delay(5000);
+      if (mqttClient.connect("ESP32_Publisher")) {
+        Serial.println(" OK !");
+        return true;
+      } else {
+        Serial.print(" Échec (code ");
+        Serial.print(mqttClient.state());
+        Serial.println(")");
+        return false;
+      }
     }
   }
+  return mqttClient.connected();
 }
 
 bool sendSensorData() {
-  float temperature = random(100, 400) / 10.0;
-  float pression = random(9500, 10500) / 10.0;
-  int humidite = random(30, 90);
+  bme.takeForcedMeasurement();
+  
+  float temperature = bme.readTemperature();
+  float pression = bme.readPressure() / 100.0F;
+  float humidite = bme.readHumidity();
+
+  if (isnan(temperature) || isnan(pression) || isnan(humidite)) {
+    Serial.println("ERREUR: Lecture capteur invalide");
+    return false;
+  }
 
   StaticJsonDocument<256> doc;
   doc["device_id"] = deviceId;
   doc["temperature"] = round(temperature * 10) / 10.0;
   doc["pression"] = round(pression * 10) / 10.0;
-  doc["humidite"] = humidite;
+  doc["humidite"] = round(humidite * 10) / 10.0;
 
   char jsonBuffer[256];
   serializeJson(doc, jsonBuffer);
@@ -100,6 +149,13 @@ void setup() {
 
   Serial.println("\n=== ESP32 Publisher MQTT ===");
 
+  Wire.begin();
+
+  if (!initBME280()) {
+    Serial.println("Système en pause - BME280 requis");
+    while (true) delay(1000);
+  }
+
   initEthernet();
   displayNetworkInfo();
   setupMQTT();
@@ -108,15 +164,19 @@ void setup() {
 }
 
 void loop() {
-  if (!mqttClient.connected()) {
-    reconnectMQTT();
-  }
+  reconnectMQTT();
+
   mqttClient.loop();
 
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    sendSensorData();
+
+    if (mqttClient.connected()) {
+      sendSensorData();
+    } else {
+      Serial.println("MQTT déconnecté - en attente de reconnexion...");
+    }
   }
 }
