@@ -6,6 +6,9 @@
 #include <Ethernet.h>
 #include <PubSubClient.h>
 #include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
 // ===== CONFIG W5500 =====
 #define ETH_CS 5
@@ -47,9 +50,10 @@ void initEthernet();
 void setupMQTT();
 
 /**
- * @brief Reconnecte au broker MQTT si la connexion est perdue
+ * @brief Reconnection au broker
+ * @return true si la reconnection est réussite, false sinon
  */
-void reconnectMQTT();
+bool reconnectMQTT();
 
 /**
  * @brief Génère et envoie des données de capteurs via MQTT
