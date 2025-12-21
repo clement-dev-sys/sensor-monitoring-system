@@ -12,10 +12,6 @@ void getUTCTimestamp(char *buffer, size_t size) {
   strftime(buffer, size, "%Y-%m-%d %H:%M:%S", utc_time);
 }
 
-long getUnixTimestampUTC(void) {
-  return (long)time(NULL);
-}
-
 // ===== SEUILS =====
 
 int loadSeuils(void) {
@@ -71,8 +67,7 @@ void displaySeuils(void) {
   printf("Humidité : %d%% à %d%%\n", seuils.hum_min, seuils.hum_max);
 }
 
-void logAlert(const char *device_id, const char *capteur, double valeur,
-              const char *type, double seuil) {
+void logAlert(const char *capteur, double valeur, const char *type, double seuil) {
   FILE *f = fopen(ALERT_FILE, "a");
   if (!f) {
     fprintf(stderr, "Erreur : impossible d'ouvrir %s\n", ALERT_FILE);
@@ -82,32 +77,32 @@ void logAlert(const char *device_id, const char *capteur, double valeur,
   char timeStr[64];
   getUTCTimestamp(timeStr, sizeof(timeStr));
 
-  fprintf(f, "[%s] ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n",
-          timeStr, type, capteur, valeur, type, seuil, device_id);
+  fprintf(f, "[%s] ALERTE %s : %s = %.1f (seuil %s : %.1f)\n",
+          timeStr, type, capteur, valeur, type, seuil);
 
   fclose(f);
 
-  printf("ALERTE %s : %s = %.1f (seuil %s : %.1f) | Device : %s\n",
-         type, capteur, valeur, type, seuil, device_id);
+  printf("ALERTE %s : %s = %.1f (seuil %s : %.1f)\n",
+         type, capteur, valeur, type, seuil);
 }
 
-void checkSeuils(const char *device_id, double temp, double press, int hum) {
+void checkSeuils(double temp, double press, int hum) {
   if (temp < seuils.temp_min) {
-    logAlert(device_id, "Température", temp, "MIN", seuils.temp_min);
+    logAlert("Température", temp, "MIN", seuils.temp_min);
   } else if (temp > seuils.temp_max) {
-    logAlert(device_id, "Température", temp, "MAX", seuils.temp_max);
+    logAlert("Température", temp, "MAX", seuils.temp_max);
   }
 
   if (press < seuils.press_min) {
-    logAlert(device_id, "Pression", press, "MIN", seuils.press_min);
+    logAlert("Pression", press, "MIN", seuils.press_min);
   } else if (press > seuils.press_max) {
-    logAlert(device_id, "Pression", press, "MAX", seuils.press_max);
+    logAlert("Pression", press, "MAX", seuils.press_max);
   }
 
   if (hum < seuils.hum_min) {
-    logAlert(device_id, "Humidité", (double)hum, "MIN", (double)seuils.hum_min);
+    logAlert("Humidité", (double)hum, "MIN", (double)seuils.hum_min);
   } else if (hum > seuils.hum_max) {
-    logAlert(device_id, "Humidité", (double)hum, "MAX", (double)seuils.hum_max);
+    logAlert("Humidité", (double)hum, "MAX", (double)seuils.hum_max);
   }
 }
 
@@ -124,7 +119,6 @@ int initDatabase(void) {
   const char *sql = "CREATE TABLE IF NOT EXISTS mesures ("
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     "timestamp TEXT NOT NULL,"
-                    "device_id TEXT NOT NULL,"
                     "temperature REAL,"
                     "pression REAL,"
                     "humidite INTEGER"
@@ -143,18 +137,16 @@ int initDatabase(void) {
   return SQLITE_OK;
 }
 
-int insertData(const char *device_id, double temp, double press, int hum) {
+int insertData(double temp, double press, int hum) {
   char sql[512];
 
   char timestamp[64];
-  time_t now = time(NULL);
-  struct tm *utc_time = gmtime(&now);
-  strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", utc_time);
+  getUTCTimestamp(timestamp, sizeof(timestamp));
 
   snprintf(sql, sizeof(sql),
-          "INSERT INTO mesures (timestamp, device_id, temperature, pression, humidite) "
-          "VALUES ('%s', '%s', %.2f, %.2f, %d);",
-          timestamp, device_id, temp, press, hum);
+          "INSERT INTO mesures (timestamp, temperature, pression, humidite) "
+          "VALUES ('%s', %.2f, %.2f, %d);",
+          timestamp, temp, press, hum);
 
   char *errMsg = 0;
   int rc = sqlite3_exec(db, sql, 0, 0, &errMsg);
@@ -181,31 +173,28 @@ int parseAndStore(const char *jsonString) {
     return -1;
   }
 
-  json_object_object_get_ex(parsed_json, "device_id", &device_id_obj);
   json_object_object_get_ex(parsed_json, "temperature", &temp_obj);
   json_object_object_get_ex(parsed_json, "pression", &press_obj);
   json_object_object_get_ex(parsed_json, "humidite", &hum_obj);
 
-  if (!device_id_obj || !temp_obj || !press_obj || !hum_obj) {
+  if (!temp_obj || !press_obj || !hum_obj) {
     printf("JSON incomplet\n");
     json_object_put(parsed_json);
     return -1;
   }
 
-  const char *device_id = json_object_get_string(device_id_obj);
   double temperature = json_object_get_double(temp_obj);
   double pression = json_object_get_double(press_obj);
   int humidite = json_object_get_int(hum_obj);
 
   printf("Données parsées :\n");
-  printf("Device ID : %s\n", device_id);
-  printf("Température : %.1f °C\n", temperature);
-  printf("Pression : %.1f hPa\n", pression);
-  printf("Humidité : %d %%\n", humidite);
+  printf(" - Température : %.1f °C\n", temperature);
+  printf(" - Pression : %.1f hPa\n", pression);
+  printf(" - Humidité : %d %%\n", humidite);
 
-  checkSeuils(device_id, temperature, pression, humidite);
+  checkSeuils(temperature, pression, humidite);
 
-  int result = insertData(device_id, temperature, pression, humidite);
+  int result = insertData(temperature, pression, humidite);
 
   if (result == SQLITE_OK) {
     printf("=== Message enregistré ===\n");
@@ -223,14 +212,12 @@ int messageArrived(void *context, char *topicName, int topicLen,
 
   printf("\n=== Message reçu ===\n");
 
-  long unix_ts = getUnixTimestampUTC();
   char readable_ts[64];
   getUTCTimestamp(readable_ts, sizeof(readable_ts));
 
-  printf("Timestamp : %ld\n", unix_ts);
   printf("Date, Heure : %s\n", readable_ts);
   printf("Topic : %s\n", topicName);
-  printf("Données : %.*s\n", message->payloadlen, payload);
+  // printf("Données : %.*s\n", message->payloadlen, payload);
 
   parseAndStore(payload);
 
@@ -266,7 +253,7 @@ int main(void) {
   MQTTClient_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
   MQTTClient_setCallbacks(client, NULL, connectionLost, messageArrived, NULL);
 
-  conn_opts.keepAliveInterval = 20;
+  conn_opts.keepAliveInterval = 6;
   conn_opts.cleansession = 1;
 
   printf("Connexion au broker MQTT...\n");

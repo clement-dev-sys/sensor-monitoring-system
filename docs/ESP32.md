@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-L'ESP32 collecte des données environnementales (température, pression, humidité) via un capteur BME280 et envoie les données via MQTT toutes les 20 secondes vers le serveur Unix.
+L'ESP32 collecte des données environnementales (température, pression, humidité) via un capteur BME280 et envoie les données via MQTT toutes les 2 secondes vers le serveur Unix.
 
 ---
 
@@ -49,7 +49,7 @@ L'ESP32 collecte des données environnementales (température, pression, humidit
 - Ethernet - Pour W5500
 - PubSubClient - Pour MQTT
 - ArduinoJson - Pour JSON
-- TODO - Pour BME280
+- Adafruit BME280 - Pour BME280
 
 ---
 
@@ -62,9 +62,8 @@ IPAddress gateway(192, 168, 69, 1);         // IP du PC serveur
 IPAddress mqttServer(192, 168, 69, 1);      // IP du PC serveur
 
 // Configuration MQTT
-const char* deviceId = "ESP32_001";       // Identifiant unique
-const char* mqttTopic = "esp32/data";     // Topic MQTT
-const long interval = 20000;              // Fréquence (20s)
+const char* mqttTopic = "esp32/env";     // Topic MQTT
+const long interval = 2000;              // Fréquence (20s)
 ```
 
 ---
@@ -73,10 +72,9 @@ const long interval = 20000;              // Fréquence (20s)
 
 ```json
 {
-  "device_id": "ESP32_001",
   "temperature": 22.5,
   "pression": 1013.2,
-  "humidite": 65,
+  "humidite": 55,
 }
 ```
 

@@ -13,7 +13,7 @@ if [ ! -f "$DB_FILE" ]; then
   exit 1
 fi
 
-log "===== Début du nettoyage ====="
+log "=== Début du nettoyage ==="
 BEFORE=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM mesures;")
 log "Nombre de 'mesures' avant: $BEFORE"
 
@@ -35,5 +35,5 @@ else
   log "$DELETED 'mesures' supprimées"
 fi
 
-log "===== Nettoyage terminé ====="
+log "=== Nettoyage terminé ==="
 echo ""

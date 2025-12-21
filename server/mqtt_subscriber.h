@@ -13,7 +13,7 @@
 // ===== CONFIG MQTT =====
 #define ADDRESS "tcp://localhost:1883"
 #define CLIENTID "UnixSubscriber"
-#define TOPIC "esp32/data"
+#define TOPIC "esp32/env"
 #define QOS 1
 
 // ===== CHEMINS FICHIERS =====
@@ -44,12 +44,6 @@ extern Seuils seuils;
  */
 void getUTCTimestamp(char *buffer, size_t size);
 
-/**
- * @brief Récupère le timestamp Unix UTC
- * @return Timestamp Unix en secondes
- */
-long getUnixTimestampUTC(void);
-
 // ===== SEUILS =====
 
 /**
@@ -70,7 +64,7 @@ void displaySeuils(void);
  * @param press Pression mesurée
  * @param hum Humidité mesurée
  */
-void checkSeuils(const char *device_id, double temp, double press, int hum);
+void checkSeuils(double temp, double press, int hum);
 
 /**
  * @brief Enregistre une alerte dans le fichier de log
@@ -80,7 +74,7 @@ void checkSeuils(const char *device_id, double temp, double press, int hum);
  * @param type Type d'alerte (MIN ou MAX)
  * @param seuil Valeur du seuil dépassé
  */
-void logAlert(const char *device_id, const char *capteur, double valeur,
+void logAlert(const char *capteur, double valeur,
               const char *type, double seuil);
 
 // ===== BASE DE DONNÉES =====
@@ -99,7 +93,7 @@ int initDatabase(void);
  * @param hum Humidité
  * @return SQLITE_OK si succès, code d'erreur sinon
  */
-int insertData(const char *device_id, double temp, double press, int hum);
+int insertData(double temp, double press, int hum);
 
 // ===== JSON =====
 
