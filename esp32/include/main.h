@@ -27,7 +27,6 @@ extern IPAddress subnet;
 extern IPAddress mqttServer;
 extern const int mqttPort;
 extern const char *mqttTopic;
-extern const char *deviceId;
 
 // ===== OBJETS =====
 extern EthernetClient ethClient;
@@ -41,8 +40,15 @@ extern const long interval;
 
 /**
  * @brief Initialise la connexion Ethernet avec le module W5500
+ * @return true si l'initialisation est réussite, false sinon
  */
-void initEthernet();
+bool initEthernet();
+
+/**
+ * @brief Initialise la connexion avec le capteur BME280
+ * @return true si l'initialisation est réussite, false sinon
+ */
+bool initBME280();
 
 /**
  * @brief Configure et connecte le client MQTT

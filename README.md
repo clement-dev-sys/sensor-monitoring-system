@@ -4,7 +4,7 @@ Système embarqué de monitoring environnemental avec : ESP32 et Capteur BME280,
 
 ## Objectifs
 
-Acquisition en temps réel de données environnementales : température, humidité, pression. Puis transmission réseau et visualisation des données.
+Acquisition en temps réel de données environnementales : température, humidité, pression. Puis transmission réseau et visualisation ainsi que stockage des données.
 
 ## Technologies
 
@@ -28,6 +28,14 @@ Acquisition en temps réel de données environnementales : température, humidit
 - [Documentation ESP32 Publisher](docs/ESP32_Publisher.md)
 - [Documentation Serveur Unix](docs/Serveur_Unix.md)
 - [Documentation Interface Graphique](docs/GUI_PyQt5.md)
+
+## Installation
+
+TODO
+
+## Utilisation
+
+TODO
 
 ## Etat du projet
 

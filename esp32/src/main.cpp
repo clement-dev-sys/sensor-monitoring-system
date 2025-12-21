@@ -8,22 +8,21 @@ IPAddress subnet(255, 255, 255, 0);
 
 IPAddress mqttServer(192, 168, 69, 1);
 const int mqttPort = 1883;
-const char *mqttTopic = "esp32/data";
-const char *deviceId = "ESP32_001";
+const char *mqttTopic = "esp32/env";
 
 EthernetClient ethClient;
 PubSubClient mqttClient(ethClient);
 Adafruit_BME280 bme;
 
 unsigned long previousMillis = 0;
-const long interval = 20000; // 20 secondes
+const long interval = 2000; // 2 secondes
 
 unsigned long lastReconnectAttempt = 0;
 const long reconnectInterval = 5000;
 
 // ===== IMPLÉMENTATION DES FONCTIONS =====
 
-void initEthernet() {
+bool initEthernet() {
   pinMode(ETH_RST, OUTPUT);
   digitalWrite(ETH_RST, LOW);
   delay(100);
@@ -38,10 +37,11 @@ void initEthernet() {
   delay(2000);
 
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("ERREUR: W5500 non détecté!");
-    while (true)
-      delay(1);
+    Serial.println("ERREUR : W5500 non détecté!");
+    return false;
   }
+
+  return true;
 }
 
 bool initBME280() {
@@ -69,8 +69,7 @@ bool initBME280() {
     return true;
   }
   
-  Serial.println("ERREUR: BME280 non détecté!");
-  Serial.println("Vérifiez le câblage I2C (SDA, SCL)");
+  Serial.println("ERREUR : BME280 non détecté!");
   return false;
 }
 
@@ -81,12 +80,9 @@ void setupMQTT() {
 void displayNetworkInfo() {
   Serial.print("IP ESP32 : ");
   Serial.println(Ethernet.localIP());
-  Serial.print("ID ESP32 : ");
-  Serial.println(deviceId);
 }
 
 bool reconnectMQTT() {
-  // Reconnexion non-bloquante
   if (!mqttClient.connected()) {
     unsigned long now = millis();
     
@@ -95,7 +91,7 @@ bool reconnectMQTT() {
       Serial.print("Connexion au broker MQTT...");
 
       if (mqttClient.connect("ESP32_Publisher")) {
-        Serial.println(" OK !");
+        Serial.println("OK !");
         return true;
       } else {
         Serial.print(" Échec (code ");
@@ -116,12 +112,11 @@ bool sendSensorData() {
   float humidite = bme.readHumidity();
 
   if (isnan(temperature) || isnan(pression) || isnan(humidite)) {
-    Serial.println("ERREUR: Lecture capteur invalide");
+    Serial.println("ERREUR : Lecture capteur invalide");
     return false;
   }
 
-  StaticJsonDocument<256> doc;
-  doc["device_id"] = deviceId;
+  JsonDocument doc;
   doc["temperature"] = round(temperature * 10) / 10.0;
   doc["pression"] = round(pression * 10) / 10.0;
   doc["humidite"] = round(humidite * 10) / 10.0;
@@ -156,11 +151,15 @@ void setup() {
     while (true) delay(1000);
   }
 
-  initEthernet();
+  if (!initEthernet()) {
+    Serial.println("Système en pause - W5500 requis");
+    while (true) delay(1000);
+  }
+
   displayNetworkInfo();
   setupMQTT();
 
-  Serial.println("Prêt à envoyer des données toutes les 20s");
+  Serial.println("Prêt à envoyer des données...");
 }
 
 void loop() {

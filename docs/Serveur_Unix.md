@@ -102,7 +102,16 @@ cd server/
 ```
 
 **Sortie attendue :**
-TODO
+```
+=== Message reçu ===
+Date, Heure : 2025-12-21 12:04:12
+Topic : esp32/env
+Données parsées :
+ - Température : 22.0 °C
+ - Pression : 984.3 hPa
+ - Humidité : 56 %
+=== Message enregistré ===
+```
 
 ---
 
@@ -114,7 +123,6 @@ TODO
 CREATE TABLE mesures (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp TEXT NOT NULL,        -- UTC : "2025-12-08 14:33:54"
-    device_id TEXT NOT NULL,        -- "ESP32_001"
     temperature REAL,               -- °C
     pression REAL,                  -- hPa
     humidite INTEGER,               -- %
@@ -129,8 +137,8 @@ Fichier : `data/alertes.log`
 
 **Format :**
 ```
-[2025-12-08 14:33:54] ALERTE MAX : Température = 38.5 (seuil MAX : 35.0) | Device : ESP32_001
-[2025-12-08 14:34:14] ALERTE MIN : Humidité = 28.0 (seuil MIN : 40.0) | Device : ESP32_001
+[2025-12-08 14:33:54] ALERTE MAX : Température = 38.5 (seuil MAX : 35.0)
+[2025-12-08 14:34:14] ALERTE MIN : Humidité = 28.0 (seuil MIN : 40.0)
 ```
 
 **Consulter :**
