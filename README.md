@@ -25,7 +25,7 @@ Acquisition en temps réel de données environnementales : température, humidit
 
 ## Documentation
 
-- [Documentation ESP32 Publisher](docs/ESP32_Publisher.md)
+- [Documentation ESP32](docs/ESP32.md)
 - [Documentation Serveur Unix](docs/Serveur_Unix.md)
 - [Documentation Interface Graphique](docs/GUI_PyQt5.md)
 
