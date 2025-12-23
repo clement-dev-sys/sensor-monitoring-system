@@ -9,6 +9,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 // ===== CONFIG MQTT =====
 #define ADDRESS "tcp://localhost:1883"
@@ -22,7 +23,8 @@
 #define CONFIG_FILE "/home/Arch/Projets/sensor-monitoring-system/server/seuils.conf"
 
 // ===== STRUCTURE SEUILS =====
-typedef struct {
+typedef struct
+{
   double temp_min;
   double temp_max;
   double press_min;
