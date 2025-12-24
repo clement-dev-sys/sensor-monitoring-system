@@ -1,41 +1,22 @@
 #ifndef MQTT_SUBSCRIBER_H
 #define MQTT_SUBSCRIBER_H
 
-#include <MQTTClient.h>
-#include <json-c/json.h>
-#include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
-
-// ===== CONFIG MQTT =====
-#define ADDRESS "tcp://localhost:1883"
-#define CLIENTID "UnixSubscriber"
-#define TOPIC "esp32/env"
-#define QOS 1
-
-// ===== CHEMINS FICHIERS =====
-#define DB_FILE "/home/Arch/Projets/sensor-monitoring-system/data/donnees_esp32.db"
-#define ALERT_FILE "/home/Arch/Projets/sensor-monitoring-system/data/alertes.log"
-#define CONFIG_FILE "/home/Arch/Projets/sensor-monitoring-system/server/seuils.conf"
-
-// ===== STRUCTURE SEUILS =====
-typedef struct
-{
-  double temp_min;
-  double temp_max;
-  double press_min;
-  double press_max;
-  int hum_min;
-  int hum_max;
-} Seuils;
+#include <MQTTClient.h>
+#include <json-c/json.h>
+#include <sqlite3.h>
+#include "config.h"
 
 // ===== VARIABLES GLOBALES =====
 extern sqlite3 *db;
-extern Seuils seuils;
+extern sqlite3_stmt *insert_stmt;
+extern Config app_config;
+extern time_t last_message_time;
 
 // ===== DATE UTC =====
 
@@ -49,43 +30,38 @@ void getUTCTimestamp(char *buffer, size_t size);
 // ===== SEUILS =====
 
 /**
- * @brief Charge les seuils depuis le fichier de configuration
- * @return 1 si succès, 0 sinon
- */
-int loadSeuils(void);
-
-/**
  * @brief Affiche les seuils chargés dans la console
+ * @param cfg Configuration contenant les seuils
  */
-void displaySeuils(void);
+void displaySeuils(const Config *cfg);
 
 /**
  * @brief Vérifie si les valeurs dépassent les seuils et génère des alertes
- * @param device_id Identifiant de l'appareil
+ * @param cfg Configuration
  * @param temp Température mesurée
  * @param press Pression mesurée
  * @param hum Humidité mesurée
  */
-void checkSeuils(double temp, double press, int hum);
+void checkSeuils(const Config *cfg, double temp, double press, int hum);
 
 /**
  * @brief Enregistre une alerte dans le fichier de log
- * @param device_id Identifiant de l'appareil
+ * @param cfg Configuration
  * @param capteur Nom du capteur
  * @param valeur Valeur mesurée
  * @param type Type d'alerte (MIN ou MAX)
  * @param seuil Valeur du seuil dépassé
  */
-void logAlert(const char *capteur, double valeur,
-              const char *type, double seuil);
+void logAlert(const Config *cfg, const char *capteur, double valeur, const char *type, double seuil);
 
 // ===== BASE DE DONNÉES =====
 
 /**
- * @brief Initialise la base de données SQLite
+ * @brief Initialise la base de données SQLite et prépare les statements
+ * @param cfg Configuration
  * @return SQLITE_OK si succès, code d'erreur sinon
  */
-int initDatabase(void);
+int initDatabase(const Config *cfg);
 
 /**
  * @brief Insère des données dans la base de données
@@ -97,14 +73,20 @@ int initDatabase(void);
  */
 int insertData(double temp, double press, int hum);
 
+/**
+ * @brief Ferme proprement la base de données et libère les statements
+ */
+void closeDatabase(void);
+
 // ===== JSON =====
 
 /**
  * @brief Parse le JSON et stocke les données
+ * @param cfg Configuration
  * @param jsonString Chaîne JSON à parser
  * @return 0 si succès, -1 en cas d'erreur
  */
-int parseAndStore(const char *jsonString);
+int parseAndStore(const Config *cfg, const char *jsonString);
 
 // ===== MQTT =====
 
@@ -116,8 +98,7 @@ int parseAndStore(const char *jsonString);
  * @param message Message MQTT reçu
  * @return 1 si traité avec succès
  */
-int messageArrived(void *context, char *topicName, int topicLen,
-                   MQTTClient_message *message);
+int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 
 /**
  * @brief Callback appelé lors de la perte de connexion MQTT
@@ -125,5 +106,14 @@ int messageArrived(void *context, char *topicName, int topicLen,
  * @param cause Cause de la déconnexion
  */
 void connectionLost(void *context, char *cause);
+
+// ===== WATCHDOG =====
+
+/**
+ * @brief Vérifie si des messages ont été reçus récemment
+ * @param timeout_seconds Délai en secondes avant alerte
+ * @return 1 si timeout détecté, 0 sinon
+ */
+int checkMessageTimeout(int timeout_seconds);
 
 #endif // MQTT_SUBSCRIBER_H

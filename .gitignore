@@ -5,6 +5,7 @@
 *.app
 **/mqtt_subscriber
 **/subscriber
+build/
 
 # Fichiers objets
 *.o
@@ -51,11 +52,8 @@ alertes.log
 
 # ===== CONFIGURATION =====
 # Fichiers de configuration sensibles
-*.conf
-!seuils.conf
 credentials.txt
 secrets.h
-config.h
 
 # ===== ÉDITEURS ET IDE =====
 # VSCode
@@ -131,7 +129,6 @@ __pycache__/
 *$py.class
 *.egg-info/
 dist/
-build/
 venv/
 env/
 .venv/
