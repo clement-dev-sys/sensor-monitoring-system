@@ -1,0 +1,49 @@
+# ===== CONFIGURATION SENSOR MONITORING SYSTEM =====
+
+[mqtt]
+broker_address = "tcp://localhost:1883"
+topic = "esp32/env"
+client_id = "UnixSubscriber"
+qos = 1
+keepalive_interval = 60
+
+[database]
+path = "data/donnees_esp32.db"
+retention_hours = 3
+cleanup_batch_size = 2000
+
+[logging]
+alert_file = "data/alertes.log"
+cleanup_log = "scripts/cleanbd.log"
+
+[thresholds]
+[thresholds.temperature]
+min = 17.0
+max = 24.0
+[thresholds.pression]
+min = 980.0
+max = 1030.0
+[thresholds.humidite]
+min = 40
+max = 70
+
+[paths]
+data_dir = "data"
+scripts_dir = "scripts"
+server_dir = "server"
+
+# Config ESP32 (todo ?)
+[network]
+esp32_ip = "192.168.69.2"
+gateway = "192.168.69.1"
+subnet = "255.255.255.0"
+
+[timing]
+send_interval = 5000
+reconnect_interval = 10000
+
+[mqtt_esp]
+broker_address = "192.168.69.1"
+broker_port = 1883
+topic = "esp32/env"
+qos = 1
