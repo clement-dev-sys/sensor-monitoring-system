@@ -27,11 +27,29 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LIBS) -o $(TARGET)
 	@echo "Compilation réussie : $(TARGET)"
 
-# Installation des dépendances (Arch Linux)
+# Installation des dépendances
 deps:
-	@echo "Installation des dépendances..."
-	sudo pacman -S --needed eclipse-paho-mqtt-c json-c sqlite toml-c
-	@echo "Dépendances installées"
+	@echo "Vérification des dépendances..."
+	@if ! command -v yay >/dev/null 2>&1; then \
+		echo ""; \
+		echo "ATTENTION : yay n'est pas installé !"; \
+		echo ""; \
+		echo "yay est nécessaire pour installer paho-mqtt-c et tomlc99 depuis AUR."; \
+		echo ""; \
+		echo "Options :"; \
+		echo "  1) Installer yay."; \
+		echo "  2) Installer manuellement les dépendances paho-mqtt-c et tomlc99."; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "Installation des dépendances pacman..."
+	@sudo pacman -S --needed json-c sqlite
+	@echo ""
+	@echo "Installation des dépendances yay"
+	@yay -S --needed paho-mqtt-c tomlc99
+	@echo ""
+	@echo "Toutes les dépendances sont installées !"
 
 # Nettoyage
 clean:

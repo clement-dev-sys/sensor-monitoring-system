@@ -246,7 +246,7 @@ int parseAndStore(const Config *cfg, const char *jsonString)
 
   if (result == SQLITE_OK)
   {
-    printf("Message enregistré\n");
+    printf("=== Message enregistré ===\n");
   }
 
   json_object_put(parsed_json);
@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
 
   printf("Connecté au broker\n");
 
-  printf("Abonnement à : %s (QoS %d)\n", app_config.mqtt.topic, app_config.mqtt.qos);
+  printf("Abonnement à : %s\n", app_config.mqtt.topic);
   MQTTClient_subscribe(client, app_config.mqtt.topic, app_config.mqtt.qos);
   printf("Abonné\n\n");
 
