@@ -19,10 +19,7 @@ unsigned long previousMillis = 0;
 const long interval = 5000; // 5 secondes
 
 unsigned long lastReconnectAttempt = 0;
-const long reconnectInterval = 10000;
-
-unsigned long messagesEnvoyes = 0;
-unsigned long messagesEchoues = 0;
+const long reconnectInterval = 15000;
 
 // ===== IMPLÉMENTATION DES FONCTIONS =====
 
@@ -111,8 +108,6 @@ bool reconnectMQTT()
       if (mqttClient.connect("ESP32_Publisher"))
       {
         Serial.println("OK !");
-        if (messagesEnvoyes > 0 || messagesEchoues > 0)
-          Serial.printf("Stats: %lu envoyés, %lu échecs\n", messagesEnvoyes, messagesEchoues);
         return true;
       }
       else
@@ -157,33 +152,13 @@ bool sendSensorData()
   if (success)
   {
     Serial.println("=== Envoyé ===");
-    messagesEnvoyes++;
     return true;
   }
   else
   {
     Serial.println("=== Échec ===");
-    messagesEchoues++;
     return false;
   }
-}
-
-void displayStats()
-{
-  unsigned long uptime = millis() / 1000;
-
-  Serial.println("\n=== Statistiques ===");
-  Serial.printf("Uptime: %lu s\n", uptime);
-  Serial.printf("Messages envoyés: %lu\n", messagesEnvoyes);
-  Serial.printf("Messages échoués: %lu\n", messagesEchoues);
-
-  if (messagesEnvoyes + messagesEchoues > 0)
-  {
-    float successRate = (float)messagesEnvoyes / (messagesEnvoyes + messagesEchoues) * 100.0;
-    Serial.printf("Taux de succès: %.1f%%\n", successRate);
-  }
-
-  Serial.println("====================\n");
 }
 
 // ===== SETUP ET LOOP =====
@@ -232,8 +207,6 @@ void loop()
     if (mqttClient.connected())
     {
       sendSensorData();
-      if (messagesEnvoyes % 30 == 0 && messagesEnvoyes > 0)
-        displayStats();
     }
     else
     {

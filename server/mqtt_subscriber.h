@@ -98,14 +98,14 @@ int parseAndStore(const Config *cfg, const char *jsonString);
  * @param message Message MQTT reçu
  * @return 1 si traité avec succès
  */
-int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message);
+int messageArrived(char *topicName, MQTTClient_message *message);
 
 /**
  * @brief Callback appelé lors de la perte de connexion MQTT
  * @param context Contexte utilisateur
  * @param cause Cause de la déconnexion
  */
-void connectionLost(void *context, char *cause);
+void connectionLost(char *cause);
 
 // ===== WATCHDOG =====
 

@@ -25,8 +25,8 @@ void config_init_defaults(Config *cfg)
   cfg->thresholds.temp_max = 30.0;
   cfg->thresholds.press_min = 980.0;
   cfg->thresholds.press_max = 1050.0;
-  cfg->thresholds.hum_min = 30;
-  cfg->thresholds.hum_max = 70;
+  cfg->thresholds.hum_min = 40;
+  cfg->thresholds.hum_max = 60;
 
   // Paths
   strcpy(cfg->paths.data_dir, "data");
@@ -36,7 +36,7 @@ void config_init_defaults(Config *cfg)
 
 static void get_project_root(const char *config_file, char *root, size_t root_size)
 {
-  char abs_path[PATH_MAX];
+  char abs_path[PATH];
   if (realpath(config_file, abs_path) == NULL)
   {
     getcwd(root, root_size);

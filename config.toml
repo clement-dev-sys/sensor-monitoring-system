@@ -2,6 +2,7 @@
 
 [mqtt]
 broker_address = "tcp://localhost:1883"
+broker_port = 1883
 topic = "esp32/env"
 client_id = "UnixSubscriber"
 qos = 1
@@ -32,18 +33,26 @@ data_dir = "data"
 scripts_dir = "scripts"
 server_dir = "server"
 
-# Config ESP32 (todo ?)
 [network]
-esp32_ip = "192.168.69.2"
-gateway = "192.168.69.1"
-subnet = "255.255.255.0"
+interface_server = "enp0s25"
+ip_server = "192.168.69.1"
+ip_esp = "192.168.69.2"
 
 [timing]
+# ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
 send_interval = 5000
-reconnect_interval = 10000
+reconnect_interval = 15000
 
-[mqtt_esp]
-broker_address = "192.168.69.1"
-broker_port = 1883
-topic = "esp32/env"
-qos = 1
+[network_esp32]
+# ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
+ip_esp = "192.168.69.2"
+gateway_esp = "192.168.69.1"
+subnet_esp = "255.255.255.0"
+mac_esp = "DE:AD:BE:EF:FE:ED"
+
+[mqtt_esp32]
+# ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
+broker_address_esp = "192.168.69.1"
+broker_port_esp = 1883
+topic_esp = "esp32/env"
+qos_esp = 1
