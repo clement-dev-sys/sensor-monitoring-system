@@ -8,6 +8,7 @@ LIBS = -lpaho-mqtt3c -ljson-c -lsqlite3 -ltoml
 SRC_DIR = server
 BUILD_DIR = build
 DATA_DIR = data
+SCRIPT_DIR = scripts
 
 # Fichiers
 TARGET = $(BUILD_DIR)/mqtt_subscriber
@@ -44,7 +45,7 @@ deps:
 	fi
 	@echo ""
 	@echo "Installation des dépendances pacman..."
-	@sudo pacman -S --needed json-c sqlite
+	@sudo pacman -S --needed mosquitto json-c sqlite
 	@echo ""
 	@echo "Installation des dépendances yay"
 	@yay -S --needed paho-mqtt-c tomlc99
@@ -61,12 +62,13 @@ clean:
 cleanall: clean
 	@echo "Nettoyage complet..."
 	@rm -f $(DATA_DIR)/*.db $(DATA_DIR)/*.log
-	@echo "✅ Nettoyage complet terminé"
+	@rm -f $(SCRIPT_DIR)/*.log
+	@echo "Nettoyage complet terminé"
 
 # Lancer le serveur
 run: $(TARGET)
-	@echo "🚀 Lancement du serveur..."
-	@./$(TARGET) config.toml
+	@echo "Lancement du serveur..."
+	@bash scripts/check_network.sh && ./$(TARGET) config.toml || (echo "Vérification réseau échouée" && exit 1)
 
 # Aide
 help:
@@ -74,5 +76,5 @@ help:
 	@echo "  make deps        - Installer les dépendances"
 	@echo "  make             - Compiler le projet"
 	@echo "  make run         - Compiler et lancer"
-	@echo "  make clean       - Nettoyer les binaires"
-	@echo "  make cleanall    - Nettoyer tout (BDD incluse)"
+	@echo "  make clean       - Nettoyer build/"
+	@echo "  make cleanall    - Nettoyer tout (data/ inclus)"

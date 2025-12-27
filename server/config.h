@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-#define PATH_MAX 256
+#define PATH 256
 
 // ===== STRUCTURES DE CONFIGURATION =====
 

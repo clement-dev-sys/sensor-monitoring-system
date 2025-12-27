@@ -92,7 +92,6 @@ $RECYCLE.BIN/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
 *.cmake
 !CMakeLists.txt
 
