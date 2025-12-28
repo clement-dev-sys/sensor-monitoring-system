@@ -255,7 +255,7 @@ int parseAndStore(const Config *cfg, const char *jsonString)
 
 // ===== MQTT =====
 
-int messageArrived(char *topicName, MQTTClient_message *message)
+int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
   char *payload = (char *)message->payload;
 
@@ -277,7 +277,7 @@ int messageArrived(char *topicName, MQTTClient_message *message)
   return 1;
 }
 
-void connectionLost(char *cause)
+void connectionLost(void *context, char *cause)
 {
   printf("\nConnexion MQTT perdue : %s\n", cause);
   printf("Tentative de reconnexion automatique...\n");

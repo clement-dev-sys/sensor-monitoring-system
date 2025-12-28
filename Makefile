@@ -68,7 +68,7 @@ cleanall: clean
 # Lancer le serveur
 run: $(TARGET)
 	@echo "Lancement du serveur..."
-	@bash scripts/check_network.sh && ./$(TARGET) config.toml || (echo "Vérification réseau échouée" && exit 1)
+	@bash scripts/network.sh && ./$(TARGET) config.toml || (echo "Vérification réseau échouée" && exit 1)
 
 # Aide
 help:
