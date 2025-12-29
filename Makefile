@@ -8,7 +8,6 @@ LIBS = -lpaho-mqtt3c -ljson-c -lsqlite3 -ltoml
 SRC_DIR = server
 BUILD_DIR = build
 DATA_DIR = data
-SCRIPT_DIR = scripts
 
 # Fichiers
 TARGET = $(BUILD_DIR)/mqtt_subscriber
@@ -62,7 +61,6 @@ clean:
 cleanall: clean
 	@echo "Nettoyage complet..."
 	@rm -f $(DATA_DIR)/*.db $(DATA_DIR)/*.log $(DATA_DIR)/*.db_shm $(DATA_DIR)/*.db_wal
-	@rm -f $(SCRIPT_DIR)/*.log
 	@echo "Nettoyage complet terminé"
 
 # Lancer le serveur

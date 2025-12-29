@@ -27,14 +27,22 @@ extern IPAddress subnet;
 extern IPAddress mqttServer;
 extern const int mqttPort;
 extern const char *mqttTopic;
+extern const int mqttQos;
 
 // ===== OBJETS =====
 extern EthernetClient ethClient;
 extern PubSubClient mqttClient;
+extern Adafruit_BME280 bme;
 
 // ===== TIMING =====
 extern unsigned long previousMillis;
 extern const long interval;
+extern unsigned long lastReconnectAttempt;
+extern const long reconnectInterval;
+
+// ===== FAILURE =====
+extern unsigned long consecutiveFailures;
+extern const unsigned long max_failures;
 
 // ===== FONCTIONS =====
 
@@ -56,6 +64,21 @@ bool initBME280();
 void setupMQTT();
 
 /**
+ * @brief Affiche les informations de configurations réseau
+ */
+void displayNetworkInfo();
+
+/**
+ * @brief Vérifie le réseau en cas d'erreur MQTT
+ */
+void checkNetworkStatus();
+
+/**
+ * @brief Réinitialisation du système si trop d'erreur MQTT
+ */
+void resetSystem();
+
+/**
  * @brief Reconnection au broker
  * @return true si la reconnection est réussite, false sinon
  */
@@ -66,10 +89,5 @@ bool reconnectMQTT();
  * @return true si l'envoi a réussi, false sinon
  */
 bool sendSensorData();
-
-/**
- * @brief Affiche les informations réseau dans le Serial
- */
-void displayNetworkInfo();
 
 #endif // ESP32_MQTT_PUBLISHER_H
