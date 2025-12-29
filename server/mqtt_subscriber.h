@@ -16,7 +16,16 @@
 extern sqlite3 *db;
 extern sqlite3_stmt *insert_stmt;
 extern Config app_config;
-extern time_t last_message_time;
+
+typedef struct
+{
+    int temp_low_active;
+    int temp_high_active;
+    int press_low_active;
+    int press_high_active;
+    int hum_low_active;
+    int hum_high_active;
+} AlertState;
 
 // ===== DATE UTC =====
 
@@ -36,7 +45,7 @@ void getUTCTimestamp(char *buffer, size_t size);
 void displaySeuils(const Config *cfg);
 
 /**
- * @brief Vérifie si les valeurs dépassent les seuils et génère des alertes
+ * @brief Vérifie si les valeurs dépassent les seuils et génère des alertes sur transition
  * @param cfg Configuration
  * @param temp Température mesurée
  * @param press Pression mesurée
@@ -45,14 +54,11 @@ void displaySeuils(const Config *cfg);
 void checkSeuils(const Config *cfg, double temp, double press, int hum);
 
 /**
- * @brief Enregistre une alerte dans le fichier de log
+ * @brief Enregistre une alerte ou un retour à la normale dans le fichier de log
  * @param cfg Configuration
- * @param capteur Nom du capteur
- * @param valeur Valeur mesurée
- * @param type Type d'alerte (MIN ou MAX)
- * @param seuil Valeur du seuil dépassé
+ * @param message Message à logger
  */
-void logAlert(const Config *cfg, const char *capteur, double valeur, const char *type, double seuil);
+void logAlert(const Config *cfg, const char *message);
 
 // ===== BASE DE DONNÉES =====
 
@@ -106,14 +112,5 @@ int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_mess
  * @param cause Cause de la déconnexion
  */
 void connectionLost(void *context, char *cause);
-
-// ===== WATCHDOG =====
-
-/**
- * @brief Vérifie si des messages ont été reçus récemment
- * @param timeout_seconds Délai en secondes avant alerte
- * @return 1 si timeout détecté, 0 sinon
- */
-int checkMessageTimeout(int timeout_seconds);
 
 #endif // MQTT_SUBSCRIBER_H

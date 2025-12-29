@@ -61,7 +61,7 @@ clean:
 # Nettoyage complet
 cleanall: clean
 	@echo "Nettoyage complet..."
-	@rm -f $(DATA_DIR)/*.db $(DATA_DIR)/*.log
+	@rm -f $(DATA_DIR)/*.db $(DATA_DIR)/*.log $(DATA_DIR)/*.db_shm $(DATA_DIR)/*.db_wal
 	@rm -f $(SCRIPT_DIR)/*.log
 	@echo "Nettoyage complet terminé"
 

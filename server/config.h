@@ -60,7 +60,8 @@ typedef struct
   LoggingConfig logging;
   ThresholdsConfig thresholds;
   PathsConfig paths;
-  char project_root[512]; // Dossier racine du projet
+  char project_root[512];
+  int display_messages;
 } Config;
 
 // ===== FONCTIONS =====
