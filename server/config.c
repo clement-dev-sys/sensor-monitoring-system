@@ -32,6 +32,8 @@ void config_init_defaults(Config *cfg)
   strcpy(cfg->paths.data_dir, "data");
   strcpy(cfg->paths.scripts_dir, "scripts");
   strcpy(cfg->paths.server_dir, "server");
+
+  cfg->display_messages = 1;
 }
 
 static void get_project_root(const char *config_file, char *root, size_t root_size)
@@ -212,6 +214,13 @@ int config_load(Config *cfg, const char *config_file)
     }
   }
 
+  // ===== OPTION DISPLAY =====
+  toml_datum_t display = toml_bool_in(conf, "display");
+  if (display.ok)
+  {
+    cfg->display_messages = display.u.b;
+  }
+
   toml_free(conf);
   return 0;
 }
@@ -256,5 +265,9 @@ void config_display(const Config *cfg)
          cfg->thresholds.press_min, cfg->thresholds.press_max);
   printf("  Humidité : %d%% - %d%%\n",
          cfg->thresholds.hum_min, cfg->thresholds.hum_max);
+
+  printf("\n[Affichage]\n");
+  printf("  Messages : %s\n", cfg->display_messages ? "activé" : "désactivé");
+
   printf("=============================\n\n");
 }

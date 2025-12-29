@@ -7,6 +7,7 @@ topic = "esp32/env"
 client_id = "UnixSubscriber"
 qos = 1
 keepalive_interval = 60
+display = false
 
 [database]
 path = "data/donnees_esp32.db"

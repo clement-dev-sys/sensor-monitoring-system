@@ -19,11 +19,11 @@ LOG_FILE="$PROJECT_ROOT/$LOG_PATH"
 RETENTION_STR="-${RETENTION} hours"
 
 if [ ! -f "$CONFIG_FILE" ]; then
-  echo "ERREUR: Fichier de configuration introuvable: $CONFIG_FILE"
+  echo "ERREUR : Fichier de configuration introuvable: $CONFIG_FILE"
   exit 1
 fi
 if [ ! -f "$DB_FILE" ]; then
-  echo "ERREUR: Base de données introuvable: $DB_FILE"
+  echo "ERREUR : Base de données introuvable: $DB_FILE"
   exit 1
 fi
 
@@ -49,11 +49,11 @@ while true; do
   [ "$DELETED" -eq 0 ] && break
 
   TOTAL_DELETED=$((TOTAL_DELETED + DELETED))
-  log "Batch supprimé: $DELETED lignes"
+  log "Batch supprimé : $DELETED lignes"
 done
 
 if [ "$TOTAL_DELETED" -gt 0 ]; then
-  log "Total supprimé: $TOTAL_DELETED lignes"
+  log "Total supprimé : $TOTAL_DELETED lignes"
   
   sqlite3 "$DB_FILE" "PRAGMA incremental_vacuum(200);"
 else

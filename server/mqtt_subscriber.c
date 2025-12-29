@@ -4,7 +4,7 @@
 sqlite3 *db = NULL;
 sqlite3_stmt *insert_stmt = NULL;
 Config app_config = {0};
-time_t last_message_time = 0;
+AlertState alert_state = {0};
 
 // ===== DATE UTC =====
 
@@ -28,7 +28,7 @@ void displaySeuils(const Config *cfg)
          cfg->thresholds.hum_min, cfg->thresholds.hum_max);
 }
 
-void logAlert(const Config *cfg, const char *capteur, double valeur, const char *type, double seuil)
+void logAlert(const Config *cfg, const char *message)
 {
   char alert_path[1024];
   config_resolve_path(cfg, cfg->logging.alert_file, alert_path, sizeof(alert_path));
@@ -43,41 +43,128 @@ void logAlert(const Config *cfg, const char *capteur, double valeur, const char 
   char timeStr[64];
   getUTCTimestamp(timeStr, sizeof(timeStr));
 
-  fprintf(f, "[%s] ALERTE %s : %s = %.1f (seuil %s : %.1f)\n",
-          timeStr, type, capteur, valeur, type, seuil);
+  fprintf(f, "[%s] %s\n", timeStr, message);
   fclose(f);
 
-  printf("ALERTE %s : %s = %.1f (seuil %s : %.1f)\n",
-         type, capteur, valeur, type, seuil);
+  if (app_config.display_messages)
+  {
+    printf("[%s] %s\n", timeStr, message);
+  }
 }
 
 void checkSeuils(const Config *cfg, double temp, double press, int hum)
 {
+  char alert_msg[256];
+
+  // ===== TEMPÉRATURE =====
   if (temp < cfg->thresholds.temp_min)
   {
-    logAlert(cfg, "Température", temp, "MIN", cfg->thresholds.temp_min);
+    if (!alert_state.temp_low_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Température trop basse (%.1f°C < %.1f°C)", temp, cfg->thresholds.temp_min);
+      logAlert(cfg, alert_msg);
+      alert_state.temp_low_active = 1;
+      alert_state.temp_high_active = 0;
+    }
   }
   else if (temp > cfg->thresholds.temp_max)
   {
-    logAlert(cfg, "Température", temp, "MAX", cfg->thresholds.temp_max);
+    if (!alert_state.temp_high_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Température trop élevée (%.1f°C > %.1f°C)", temp, cfg->thresholds.temp_max);
+      logAlert(cfg, alert_msg);
+      alert_state.temp_high_active = 1;
+      alert_state.temp_low_active = 0;
+    }
+  }
+  else
+  {
+    if (alert_state.temp_low_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "Température revenue à la normale (%.1f°C)", temp);
+      logAlert(cfg, alert_msg);
+      alert_state.temp_low_active = 0;
+    }
+    else if (alert_state.temp_high_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "Température revenue à la normale (%.1f°C)", temp);
+      logAlert(cfg, alert_msg);
+      alert_state.temp_high_active = 0;
+    }
   }
 
+  // ===== PRESSION =====
   if (press < cfg->thresholds.press_min)
   {
-    logAlert(cfg, "Pression", press, "MIN", cfg->thresholds.press_min);
+    if (!alert_state.press_low_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Pression trop basse (%.1f hPa < %.1f hPa)", press, cfg->thresholds.press_min);
+      logAlert(cfg, alert_msg);
+      alert_state.press_low_active = 1;
+      alert_state.press_high_active = 0;
+    }
   }
   else if (press > cfg->thresholds.press_max)
   {
-    logAlert(cfg, "Pression", press, "MAX", cfg->thresholds.press_max);
+    if (!alert_state.press_high_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Pression trop élevée (%.1f hPa > %.1f hPa)", press, cfg->thresholds.press_max);
+      logAlert(cfg, alert_msg);
+      alert_state.press_high_active = 1;
+      alert_state.press_low_active = 0;
+    }
+  }
+  else
+  {
+    if (alert_state.press_low_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "Pression revenue à la normale (%.1f hPa)", press);
+      logAlert(cfg, alert_msg);
+      alert_state.press_low_active = 0;
+    }
+    else if (alert_state.press_high_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "Pression revenue à la normale (%.1f hPa)", press);
+      logAlert(cfg, alert_msg);
+      alert_state.press_high_active = 0;
+    }
   }
 
+  // ===== HUMIDITÉ =====
   if (hum < cfg->thresholds.hum_min)
   {
-    logAlert(cfg, "Humidité", (double)hum, "MIN", (double)cfg->thresholds.hum_min);
+    if (!alert_state.hum_low_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Humidité trop basse (%d%% < %d%%)", hum, cfg->thresholds.hum_min);
+      logAlert(cfg, alert_msg);
+      alert_state.hum_low_active = 1;
+      alert_state.hum_high_active = 0;
+    }
   }
   else if (hum > cfg->thresholds.hum_max)
   {
-    logAlert(cfg, "Humidité", (double)hum, "MAX", (double)cfg->thresholds.hum_max);
+    if (!alert_state.hum_high_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Humidité trop élevée (%d%% > %d%%)", hum, cfg->thresholds.hum_max);
+      logAlert(cfg, alert_msg);
+      alert_state.hum_high_active = 1;
+      alert_state.hum_low_active = 0;
+    }
+  }
+  else
+  {
+    if (alert_state.hum_low_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "Humidité revenue à la normale (%d%%)", hum);
+      logAlert(cfg, alert_msg);
+      alert_state.hum_low_active = 0;
+    }
+    else if (alert_state.hum_high_active)
+    {
+      snprintf(alert_msg, sizeof(alert_msg), "Humidité revenue à la normale (%d%%)", hum);
+      logAlert(cfg, alert_msg);
+      alert_state.hum_high_active = 0;
+    }
   }
 }
 
@@ -235,10 +322,13 @@ int parseAndStore(const Config *cfg, const char *jsonString)
   double pression = json_object_get_double(press_obj);
   int humidite = json_object_get_int(hum_obj);
 
-  printf("Données parsées :\n");
-  printf(" - Température : %.1f °C\n", temperature);
-  printf(" - Pression : %.1f hPa\n", pression);
-  printf(" - Humidité : %d %%\n", humidite);
+  if (app_config.display_messages)
+  {
+    printf("Données parsées :\n");
+    printf(" - Température : %.1f °C\n", temperature);
+    printf(" - Pression : %.1f hPa\n", pression);
+    printf(" - Humidité : %d %%\n", humidite);
+  }
 
   checkSeuils(cfg, temperature, pression, humidite);
 
@@ -246,7 +336,10 @@ int parseAndStore(const Config *cfg, const char *jsonString)
 
   if (result == SQLITE_OK)
   {
-    printf("=== Message enregistré ===\n");
+    if (app_config.display_messages)
+    {
+      printf("=== Message enregistré ===\n");
+    }
   }
 
   json_object_put(parsed_json);
@@ -257,17 +350,21 @@ int parseAndStore(const Config *cfg, const char *jsonString)
 
 int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
+  (void)context;
+  (void)topicLen;
+
   char *payload = (char *)message->payload;
 
-  printf("\n=== Message reçu ===\n");
+  if (app_config.display_messages)
+  {
+    printf("\n=== Message reçu ===\n");
 
-  char readable_ts[64];
-  getUTCTimestamp(readable_ts, sizeof(readable_ts));
+    char readable_ts[64];
+    getUTCTimestamp(readable_ts, sizeof(readable_ts));
 
-  printf("Date, Heure : %s\n", readable_ts);
-  printf("Topic : %s\n", topicName);
-
-  last_message_time = time(NULL);
+    printf("Date, Heure : %s\n", readable_ts);
+    printf("Topic : %s\n", topicName);
+  }
 
   parseAndStore(&app_config, payload);
 
@@ -279,29 +376,10 @@ int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_mess
 
 void connectionLost(void *context, char *cause)
 {
+  (void)context;
+
   printf("\nConnexion MQTT perdue : %s\n", cause);
   printf("Tentative de reconnexion automatique...\n");
-}
-
-// ===== WATCHDOG =====
-
-int checkMessageTimeout(int timeout_seconds)
-{
-  if (last_message_time == 0)
-  {
-    return 0;
-  }
-
-  time_t now = time(NULL);
-  time_t elapsed = now - last_message_time;
-
-  if (elapsed > timeout_seconds)
-  {
-    printf("\nTIMEOUT : Aucun message depuis %ld secondes\n", elapsed);
-    return 1;
-  }
-
-  return 0;
 }
 
 // ===== MAIN =====
@@ -356,30 +434,14 @@ int main(int argc, char *argv[])
   MQTTClient_subscribe(client, app_config.mqtt.topic, app_config.mqtt.qos);
   printf("Abonné\n\n");
 
-  printf("En attente des données ESP32...\n");
-
-  int watchdog_timeout = 60;
+  if (app_config.display_messages)
+  {
+    printf("En attente des données ESP32...\n");
+  }
 
   while (1)
   {
     sleep(10);
-
-    if (checkMessageTimeout(watchdog_timeout))
-    {
-      char alert_path[1024];
-      config_resolve_path(&app_config, app_config.logging.alert_file, alert_path, sizeof(alert_path));
-
-      FILE *f = fopen(alert_path, "a");
-      if (f)
-      {
-        char ts[64];
-        getUTCTimestamp(ts, sizeof(ts));
-        fprintf(f, "[%s] WATCHDOG : ESP32 ne répond plus\n", ts);
-        fclose(f);
-      }
-
-      last_message_time = time(NULL);
-    }
   }
 
   MQTTClient_disconnect(client, 10000);
