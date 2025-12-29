@@ -33,6 +33,7 @@ void config_init_defaults(Config *cfg)
   strcpy(cfg->paths.scripts_dir, "scripts");
   strcpy(cfg->paths.server_dir, "server");
 
+  // Affichage
   cfg->display_messages = 1;
 }
 
@@ -214,7 +215,7 @@ int config_load(Config *cfg, const char *config_file)
     }
   }
 
-  // ===== OPTION DISPLAY =====
+  // ===== SECTION [affichage] =====
   toml_datum_t display = toml_bool_in(conf, "display");
   if (display.ok)
   {

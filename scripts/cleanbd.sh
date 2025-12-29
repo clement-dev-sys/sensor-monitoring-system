@@ -22,14 +22,15 @@ if [ ! -f "$CONFIG_FILE" ]; then
   echo "ERREUR : Fichier de configuration introuvable: $CONFIG_FILE"
   exit 1
 fi
-if [ ! -f "$DB_FILE" ]; then
-  echo "ERREUR : Base de données introuvable: $DB_FILE"
-  exit 1
-fi
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
+
+if [ ! -f "$DB_FILE" ]; then
+  log "ERREUR : Base de données introuvable: $DB_FILE"
+  exit 1
+fi
 
 log "=== Nettoyage ==="
 

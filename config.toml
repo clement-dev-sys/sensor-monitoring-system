@@ -7,6 +7,8 @@ topic = "esp32/env"
 client_id = "UnixSubscriber"
 qos = 1
 keepalive_interval = 60
+
+[affichage]
 display = false
 
 [database]

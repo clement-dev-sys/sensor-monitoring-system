@@ -16,10 +16,12 @@ PubSubClient mqttClient(ethClient);
 Adafruit_BME280 bme;
 
 unsigned long previousMillis = 0;
-const long interval = 5000; // 5 secondes
-
+const long interval = 5000;
 unsigned long lastReconnectAttempt = 0;
 const long reconnectInterval = 15000;
+
+unsigned long consecutiveFailures = 0;
+const unsigned long max_failures = 3;
 
 // ===== IMPLÉMENTATION DES FONCTIONS =====
 
@@ -94,6 +96,67 @@ void displayNetworkInfo()
   Serial.println(Ethernet.localIP());
 }
 
+void checkNetworkStatus()
+{
+  Serial.println("\n=== Diagnostic Réseau ===");
+
+  auto link = Ethernet.linkStatus();
+  Serial.print("Lien Ethernet : ");
+  if (link == LinkON)
+  {
+    Serial.println("  Connecté");
+  }
+  else if (link == LinkOFF)
+  {
+    Serial.println("  Déconnecté - Câble débranché ?");
+  }
+  else
+  {
+    Serial.println("  Inconnu");
+  }
+
+  Serial.print("IP actuelle   : ");
+  IPAddress currentIP = Ethernet.localIP();
+  Serial.println(currentIP);
+
+  if (currentIP == IPAddress(0, 0, 0, 0))
+  {
+    Serial.println("  IP invalide - Problème config");
+  }
+
+  Serial.print("W5500 Hardware: ");
+  if (Ethernet.hardwareStatus() == EthernetNoHardware)
+  {
+    Serial.println("  Non détecté");
+  }
+  else
+  {
+    Serial.println("  Détecté");
+  }
+
+  Serial.println("======================\n");
+}
+
+void resetSystem()
+{
+  Serial.println("\nRESET COMPLET DU SYSTÈME");
+
+  Serial.println("  Fermeture MQTT...");
+  mqttClient.disconnect();
+  delay(500);
+
+  Serial.println("  Reset W5500...");
+  digitalWrite(ETH_RST, LOW);
+  delay(200);
+  digitalWrite(ETH_RST, HIGH);
+  delay(500);
+
+  Serial.println("  Redémarrage ESP32...");
+  delay(2000);
+
+  ESP.restart();
+}
+
 bool reconnectMQTT()
 {
   if (!mqttClient.connected())
@@ -103,11 +166,14 @@ bool reconnectMQTT()
     if (now - lastReconnectAttempt > reconnectInterval)
     {
       lastReconnectAttempt = now;
+
+      checkNetworkStatus();
       Serial.print("Connexion au broker MQTT...");
 
       if (mqttClient.connect("ESP32_Publisher"))
       {
         Serial.println("OK !");
+        consecutiveFailures = 0;
         return true;
       }
       else
@@ -115,6 +181,16 @@ bool reconnectMQTT()
         Serial.print(" Échec (code ");
         Serial.print(mqttClient.state());
         Serial.println(")");
+
+        consecutiveFailures++;
+        Serial.printf("Échecs consécutifs : %lu/%lu\n", consecutiveFailures, max_failures);
+
+        if (consecutiveFailures >= max_failures)
+        {
+          Serial.println("\nTrop d'échecs - Reset système requis");
+          resetSystem();
+        }
+
         return false;
       }
     }
@@ -189,11 +265,18 @@ void setup()
   displayNetworkInfo();
   setupMQTT();
 
+  Serial.printf("\nConfiguration :\n");
+  Serial.printf("  - Intervalle envoi : %lu ms\n", interval);
+  Serial.printf("  - Intervalle reconnexion : %lu ms\n", reconnectInterval);
+  Serial.printf("  - Max échecs avant reset : %lu\n\n", max_failures);
+
   Serial.println("Prêt à envoyer des données...");
 }
 
 void loop()
 {
+  Ethernet.maintain();
+
   reconnectMQTT();
 
   mqttClient.loop();
