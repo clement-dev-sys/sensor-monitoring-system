@@ -19,12 +19,12 @@ void getUTCTimestamp(char *buffer, size_t size)
 
 void displaySeuils(const Config *cfg)
 {
-  printf("\nSeuils d'alerte configurés:\n");
-  printf("Température : %.1f°C à %.1f°C\n",
+  printf("Seuils d'alerte configurés:\n");
+  printf("  Température : %.1f°C à %.1f°C\n",
          cfg->thresholds.temp_min, cfg->thresholds.temp_max);
-  printf("Pression : %.1f à %.1f hPa\n",
+  printf("  Pression : %.1f à %.1f hPa\n",
          cfg->thresholds.press_min, cfg->thresholds.press_max);
-  printf("Humidité : %d%% à %d%%\n",
+  printf("  Humidité : %d%% à %d%%\n",
          cfg->thresholds.hum_min, cfg->thresholds.hum_max);
 }
 
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
   MQTTClient client;
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
 
-  printf("=== Subscriber MQTT ===\n");
+  printf("\n=== Subscriber MQTT ===\n");
 
   const char *config_file = (argc > 1) ? argv[1] : "config.toml";
 
@@ -428,11 +428,11 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
-  printf("Connecté au broker\n");
+  printf("  Connecté au broker\n");
 
-  printf("Abonnement à : %s\n", app_config.mqtt.topic);
+  printf("Abonnement à %s\n", app_config.mqtt.topic);
   MQTTClient_subscribe(client, app_config.mqtt.topic, app_config.mqtt.qos);
-  printf("Abonné\n\n");
+  printf("  Abonné\n\n");
 
   if (app_config.display_messages)
   {

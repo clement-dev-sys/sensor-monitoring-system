@@ -216,10 +216,14 @@ int config_load(Config *cfg, const char *config_file)
   }
 
   // ===== SECTION [affichage] =====
-  toml_datum_t display = toml_bool_in(conf, "display");
-  if (display.ok)
+  toml_table_t *affichage = toml_table_in(conf, "affichage");
+  if (affichage)
   {
-    cfg->display_messages = display.u.b;
+    toml_datum_t display = toml_bool_in(affichage, "display");
+    if (display.ok)
+    {
+      cfg->display_messages = display.u.b;
+    }
   }
 
   toml_free(conf);
@@ -270,5 +274,5 @@ void config_display(const Config *cfg)
   printf("\n[Affichage]\n");
   printf("  Messages : %s\n", cfg->display_messages ? "activé" : "désactivé");
 
-  printf("=============================\n\n");
+  printf("\n=============================\n\n");
 }
