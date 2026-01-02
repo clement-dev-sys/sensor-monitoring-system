@@ -46,6 +46,10 @@ ip_esp = "192.168.69.2"
 send_interval = 5000
 reconnect_interval = 15000
 
+[failures]
+# ATTENTION CETTE VALEUR DOIT ÊTRE CODÉE EN DUR DANS main.cpp
+max_failures = 3
+
 [network_esp32]
 # ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
 ip_esp = "192.168.69.2"
