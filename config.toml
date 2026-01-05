@@ -9,7 +9,7 @@ qos = 1
 keepalive_interval = 60
 
 [affichage]
-display = false
+display = true
 
 [database]
 path = "data/donnees_esp32.db"
