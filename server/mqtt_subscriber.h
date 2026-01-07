@@ -71,13 +71,13 @@ int initDatabase(const Config *cfg);
 
 /**
  * @brief Insère des données dans la base de données
- * @param device_id Identifiant de l'appareil
+ * @param timestamp Timestamp de l'envoi des données
  * @param temp Température
  * @param press Pression
  * @param hum Humidité
  * @return SQLITE_OK si succès, code d'erreur sinon
  */
-int insertData(double temp, double press, int hum);
+int insertData(const char *timestamp, double temp, double press, int hum);
 
 /**
  * @brief Ferme proprement la base de données et libère les statements

@@ -249,16 +249,13 @@ int initDatabase(const Config *cfg)
   return SQLITE_OK;
 }
 
-int insertData(double temp, double press, int hum)
+int insertData(const char *timestamp, double temp, double press, int hum)
 {
   if (!insert_stmt)
   {
     fprintf(stderr, "Statement non initialisé\n");
     return SQLITE_ERROR;
   }
-
-  char timestamp[64];
-  getUTCTimestamp(timestamp, sizeof(timestamp));
 
   sqlite3_bind_text(insert_stmt, 1, timestamp, -1, SQLITE_TRANSIENT);
   sqlite3_bind_double(insert_stmt, 2, temp);
@@ -322,9 +319,21 @@ int parseAndStore(const Config *cfg, const char *jsonString)
   double pression = json_object_get_double(press_obj);
   int humidite = json_object_get_int(hum_obj);
 
+  struct json_object *timestamp_obj;
+  char timestamp[64];
+  if (json_object_object_get_ex(parsed_json, "timestamp", &timestamp_obj))
+  {
+    strncpy(timestamp, json_object_get_string(timestamp_obj), sizeof(timestamp) - 1);
+  }
+  else
+  {
+    getUTCTimestamp(timestamp, sizeof(timestamp));
+  }
+
   if (app_config.display_messages)
   {
     printf("Données parsées :\n");
+    printf(" - Timestamp : %s\n", timestamp);
     printf(" - Température : %.1f °C\n", temperature);
     printf(" - Pression : %.1f hPa\n", pression);
     printf(" - Humidité : %d %%\n", humidite);
@@ -332,7 +341,7 @@ int parseAndStore(const Config *cfg, const char *jsonString)
 
   checkSeuils(cfg, temperature, pression, humidite);
 
-  int result = insertData(temperature, pression, humidite);
+  int result = insertData(timestamp, temperature, pression, humidite);
 
   if (result == SQLITE_OK)
   {
