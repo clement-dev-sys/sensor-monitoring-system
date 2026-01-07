@@ -51,13 +51,11 @@ class MQTTWorker(QThread):
             payload = json.loads(msg.payload.decode())
             
             # Extraire les données
+            timestamp = payload.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             temperature = float(payload.get('temperature', 0))
             pression = float(payload.get('pression', 0))
             humidite = int(payload.get('humidite', 0))
-            
-            # Timestamp actuel
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+                        
             # Émettre le signal avec les données
             self.data_received.emit(timestamp, temperature, pression, humidite)
             

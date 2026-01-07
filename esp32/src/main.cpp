@@ -23,6 +23,9 @@ const long reconnectInterval = 15000;
 unsigned long consecutiveFailures = 0;
 const unsigned long max_failures = 3;
 
+struct tm timeinfo;
+bool timeConfigured = false;
+
 // ===== IMPLÉMENTATION DES FONCTIONS =====
 
 bool initEthernet()
@@ -79,6 +82,41 @@ bool initBME280()
 
   Serial.println("ERREUR : BME280 non détecté!");
   return false;
+}
+
+void configureTime()
+{
+  Serial.println("Configuration NTP...");
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+  int retry = 0;
+  while (!getLocalTime(&timeinfo) && retry < 10)
+  {
+    Serial.print(".");
+    delay(1000);
+    retry++;
+  }
+
+  if (retry < 10)
+  {
+    Serial.println("\nHeure synchronisée via NTP");
+    timeConfigured = true;
+  }
+  else
+  {
+    Serial.println("\nÉchec synchronisation NTP");
+    timeConfigured = false;
+  }
+}
+
+void getUTCTimestamp(char *buffer, size_t size)
+{
+  if (!getLocalTime(&timeinfo))
+  {
+    snprintf(buffer, size, "1970-01-01 00:00:00");
+    return;
+  }
+  strftime(buffer, size, "%Y-%m-%d %H:%M:%S", &timeinfo);
 }
 
 void setupMQTT()
@@ -205,6 +243,8 @@ bool sendSensorData()
   float temperature = bme.readTemperature();
   float pression = bme.readPressure() / 100.0F;
   float humidite = bme.readHumidity();
+  char timestamp[32];
+  getUTCTimestamp(timestamp, sizeof(timestamp));
 
   if (isnan(temperature) || isnan(pression) || isnan(humidite))
   {
@@ -213,11 +253,12 @@ bool sendSensorData()
   }
 
   JsonDocument doc;
+  doc["timestamp"] = timestamp;
   doc["temperature"] = round(temperature * 10) / 10.0;
   doc["pression"] = round(pression * 10) / 10.0;
   doc["humidite"] = round(humidite * 10) / 10.0;
 
-  char jsonBuffer[256];
+  char jsonBuffer[300];
   serializeJson(doc, jsonBuffer);
 
   Serial.print("\n=== Envoi ===\n");
@@ -263,6 +304,7 @@ void setup()
   }
 
   displayNetworkInfo();
+  configureTime();
   setupMQTT();
 
   Serial.printf("\nConfiguration :\n");
