@@ -24,6 +24,7 @@ unsigned long consecutiveFailures = 0;
 const unsigned long max_failures = 3;
 
 struct tm timeinfo;
+const char *ntpServer = "192.168.69.1";
 bool timeConfigured = false;
 
 // ===== IMPLÉMENTATION DES FONCTIONS =====
@@ -87,10 +88,10 @@ bool initBME280()
 void configureTime()
 {
   Serial.println("Configuration NTP...");
-  configTime(0, 0, "192.168.69.1");
-  
+  configTime(0, 0, ntpServer);
+
   int retry = 0;
-  while (!getLocalTime(&timeinfo) && retry < 30)
+  while (!getLocalTime(&timeinfo, 10000) && retry < 30)
   {
     Serial.print(".");
     delay(1000);
@@ -111,7 +112,7 @@ void configureTime()
 
 void getUTCTimestamp(char *buffer, size_t size)
 {
-  if (!getLocalTime(&timeinfo))
+  if (!getLocalTime(&timeinfo, 10000))
   {
     snprintf(buffer, size, "1970-01-01 00:00:00");
     return;
