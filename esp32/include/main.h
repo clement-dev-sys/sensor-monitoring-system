@@ -10,6 +10,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <time.h>
+#include <WiFiUdp.h>
 
 // ===== CONFIG W5500 =====
 #define ETH_CS 5
