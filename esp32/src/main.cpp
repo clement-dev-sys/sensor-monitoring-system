@@ -87,10 +87,10 @@ bool initBME280()
 void configureTime()
 {
   Serial.println("Configuration NTP...");
-  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-
+  configTime(0, 0, "192.168.69.1");
+  
   int retry = 0;
-  while (!getLocalTime(&timeinfo) && retry < 10)
+  while (!getLocalTime(&timeinfo) && retry < 30)
   {
     Serial.print(".");
     delay(1000);
