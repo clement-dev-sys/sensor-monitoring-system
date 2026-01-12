@@ -355,8 +355,8 @@ int republishWithTimestamp(const char *timestamp, double temp, double press, int
 
   struct json_object *json_obj = json_object_new_object();
   json_object_object_add(json_obj, "timestamp", json_object_new_string(timestamp));
-  json_object_object_add(json_obj, "temperature", json_object_new_double(temp));
-  json_object_object_add(json_obj, "pression", json_object_new_double(press));
+  json_object_object_add(json_obj, "temperature", json_object_new_double(round(temp * 10) / 10.0));
+  json_object_object_add(json_obj, "pression", json_object_new_double(round(press * 10) / 10.0));
   json_object_object_add(json_obj, "humidite", json_object_new_int(hum));
 
   const char *json_string = json_object_to_json_string(json_obj);
@@ -382,12 +382,11 @@ int republishWithTimestamp(const char *timestamp, double temp, double press, int
     return -1;
   }
 
-  // rc = MQTTClient_waitForCompletion(mqtt_client, token, 1000);
+  rc = MQTTClient_waitForCompletion(mqtt_client, token, 1000);
 
   json_object_put(json_obj);
 
-  // return (rc == MQTTCLIENT_SUCCESS) ? 0 : -1;
-  return 0;
+  return (rc == MQTTCLIENT_SUCCESS) ? 0 : -1;
 }
 
 // ===== MQTT =====
