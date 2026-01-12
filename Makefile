@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -I./server
-LIBS = -lpaho-mqtt3c -ljson-c -lsqlite3 -ltoml
+LIBS = -lpaho-mqtt3c -ljson-c -lsqlite3 -ltoml -lm
 
 # Dossiers
 SRC_DIR = server
