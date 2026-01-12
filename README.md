@@ -67,7 +67,7 @@ sensor-monitoring-system/
 |-- scripts/                      # Scripts utilitaires
 |   |-- network.sh                  # Validation configuration réseau
 |   |-- cleanbd.sh                  # Cleanup base de données
-|   |-- cleanbf.log                 # Journal de rotation des données
+|   |-- cleanbd.log                 # Journal de rotation des données
 |-- Makefile                      # Build automatique pour le serveur
 |-- config.toml                   # Fichier de configuration centralisé
 |-- Sensor_monitoring_system.pdf  # Documentation complète
@@ -89,15 +89,15 @@ Le système utilise un réseau Ethernet local statique. Si votre configuration d
 **Dans `config.toml`** :
 ```toml
 [network]
-interface_server = "enp0s25"    # Votre interface Ethernet
-ip_server = "192.168.69.1"      # IP du serveur (OS Arch)
+interface_server = "enp0s25"    # Interface Ethernet
+ip_server = "192.168.69.1"      # IP du serveur
 ip_esp = "192.168.69.2"         # IP de l'ESP32
 
 [mqtt]
 broker_address = "tcp://localhost:1883"
 ```
 
-**Dans `esp32/main.cpp`** (lignes 5-9) :
+**Dans `esp32/main.cpp`** :
 ```cpp
 IPAddress ip(192, 168, 69, 2);           // IP ESP32
 IPAddress gateway(192, 168, 69, 1);      // Gateway (serveur)
@@ -167,7 +167,7 @@ make help
 make help        # Afficher l'aide
 make deps        # Installer les dépendances
 make             # Compiler le projet
-make run         # Compiler et lancer (avec validation réseau)
+make run         # Compiler et lancer
 make clean       # Nettoyer build/
 make cleanall    # Nettoyer tout (data/ inclus)
 ```
@@ -199,7 +199,7 @@ cleanup_batch_size = 2000    # Supprimer par lots de 2000
 **Affichage** :
 ```toml
 [affichage]
-display = false    # true pour afficher les messages reçus
+display = false    # true pour afficher les messages reçus sur le terminal serveur
 ```
 
 ### Démarrage du système
@@ -270,8 +270,8 @@ tail -f data/alertes.log
 
 **Format des alertes :**
 ```
-[2025-01-02 14:23:15] ALERTE : Température trop basse (16.2°C < 17.0°C)
-[2025-01-02 14:28:20] Température revenue à la normale (17.5°C)
+[2025-01-02 14:23:15] ALERTE : Température trop basse (16.8°C < 17.0°C)
+[2025-01-02 14:28:20] Température revenue à la normale (17.1°C)
 [2025-01-02 15:10:45] ALERTE : Humidité trop élevée (72% > 70%)
 ```
 
@@ -288,8 +288,8 @@ bash scripts/cleanbd.sh
 ```
 [2025-01-02 14:30:00] === Nettoyage ===
 [2025-01-02 14:30:01] Batch supprimé : 2000 lignes
-[2025-01-02 14:30:02] Batch supprimé : 1543 lignes
-[2025-01-02 14:30:03] Total supprimé : 3543 lignes
+[2025-01-02 14:30:02] Batch supprimé : 160 lignes
+[2025-01-02 14:30:03] Total supprimé : 2160 lignes
 [2025-01-02 14:30:04] === Terminé ===
 ```
 
@@ -308,7 +308,7 @@ crontab -e
 #### Journalisation
 
 ```bash
-# La rotation automatique est journalisée, pour consulter
+# La rotation automatique est journalisée, pour la consulter voir 
 cat scripts/cleanbd.log
 ```
 

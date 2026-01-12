@@ -9,8 +9,6 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <time.h>
-#include <WiFiUdp.h>
 
 // ===== CONFIG W5500 =====
 #define ETH_CS 5
@@ -59,16 +57,6 @@ bool initEthernet();
  * @return true si l'initialisation est réussite, false sinon
  */
 bool initBME280();
-
-/**
- * @brief Configuration NTP
- */
-void configureTime();
-
-/**
- * @brief Récupération timestamp UTC
- */
-void getUTCTimestamp();
 
 /**
  * @brief Configure et connecte le client MQTT

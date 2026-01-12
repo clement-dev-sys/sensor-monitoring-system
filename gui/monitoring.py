@@ -104,7 +104,7 @@ class SensorMonitorGUI(QMainWindow):
         # 192.168.69.1 est l'IP du réseau privé ESP32↔Serveur
         self.default_broker = "192.168.1.93"  # À ADAPTER selon votre serveur
         self.default_port = "1883"
-        self.default_topic = "esp32/env"
+        self.default_topic = "server/data"
         
         # Initialiser l'interface
         self.init_ui()
