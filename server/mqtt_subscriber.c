@@ -5,6 +5,7 @@ sqlite3 *db = NULL;
 sqlite3_stmt *insert_stmt = NULL;
 Config app_config = {0};
 AlertState alert_state = {0};
+MQTTClient mqtt_client = NULL;
 
 // ===== DATE UTC =====
 
@@ -319,27 +320,18 @@ int parseAndStore(const Config *cfg, const char *jsonString)
   double pression = json_object_get_double(press_obj);
   int humidite = json_object_get_int(hum_obj);
 
-  struct json_object *timestamp_obj;
-  char timestamp[64];
-  if (json_object_object_get_ex(parsed_json, "timestamp", &timestamp_obj))
-  {
-    strncpy(timestamp, json_object_get_string(timestamp_obj), sizeof(timestamp) - 1);
-  }
-  else
-  {
-    getUTCTimestamp(timestamp, sizeof(timestamp));
-  }
-
   if (app_config.display_messages)
   {
     printf("Données parsées :\n");
-    printf(" - Timestamp : %s\n", timestamp);
     printf(" - Température : %.1f °C\n", temperature);
     printf(" - Pression : %.1f hPa\n", pression);
     printf(" - Humidité : %d %%\n", humidite);
   }
 
   checkSeuils(cfg, temperature, pression, humidite);
+
+  char timestamp[64];
+  getUTCTimestamp(timestamp, sizeof(timestamp));
 
   int result = insertData(timestamp, temperature, pression, humidite);
 
@@ -349,10 +341,53 @@ int parseAndStore(const Config *cfg, const char *jsonString)
     {
       printf("=== Message enregistré ===\n");
     }
+
+    republishWithTimestamp(timestamp, temperature, pression, humidite);
   }
 
   json_object_put(parsed_json);
   return result;
+}
+
+int republishWithTimestamp(const char *timestamp, double temp, double press, int hum)
+{
+  const char *republish_topic = "server/data"; // TODO - Ajouter config.toml
+
+  struct json_object *json_obj = json_object_new_object();
+  json_object_object_add(json_obj, "timestamp", json_object_new_string(timestamp));
+  json_object_object_add(json_obj, "temperature", json_object_new_double(temp));
+  json_object_object_add(json_obj, "pression", json_object_new_double(press));
+  json_object_object_add(json_obj, "humidite", json_object_new_int(hum));
+
+  const char *json_string = json_object_to_json_string(json_obj);
+
+  if (app_config.display_messages)
+  {
+    printf("Republication sur %s : %s\n", republish_topic, json_string);
+  }
+
+  MQTTClient_message pubmsg = MQTTClient_message_initializer;
+  pubmsg.payload = (void *)json_string;
+  pubmsg.payloadlen = strlen(json_string);
+  pubmsg.qos = 1;
+  pubmsg.retained = 0;
+
+  MQTTClient_deliveryToken token;
+  int rc = MQTTClient_publishMessage(mqtt_client, republish_topic, &pubmsg, &token);
+
+  if (rc != MQTTCLIENT_SUCCESS)
+  {
+    fprintf(stderr, "Erreur republication MQTT: %d\n", rc);
+    json_object_put(json_obj);
+    return -1;
+  }
+
+  // rc = MQTTClient_waitForCompletion(mqtt_client, token, 1000);
+
+  json_object_put(json_obj);
+
+  // return (rc == MQTTCLIENT_SUCCESS) ? 0 : -1;
+  return 0;
 }
 
 // ===== MQTT =====
@@ -395,7 +430,7 @@ void connectionLost(void *context, char *cause)
 
 int main(int argc, char *argv[])
 {
-  MQTTClient client;
+  MQTTClient mqtt_client;
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
 
   printf("\n=== Subscriber MQTT ===\n");
@@ -421,16 +456,16 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
-  MQTTClient_create(&client, app_config.mqtt.broker_address,
+  MQTTClient_create(&mqtt_client, app_config.mqtt.broker_address,
                     app_config.mqtt.client_id,
                     MQTTCLIENT_PERSISTENCE_NONE, NULL);
-  MQTTClient_setCallbacks(client, NULL, connectionLost, messageArrived, NULL);
+  MQTTClient_setCallbacks(mqtt_client, NULL, connectionLost, messageArrived, NULL);
 
   conn_opts.keepAliveInterval = app_config.mqtt.keepalive_interval;
   conn_opts.cleansession = 1;
 
   printf("Connexion au broker MQTT (%s)...\n", app_config.mqtt.broker_address);
-  if (MQTTClient_connect(client, &conn_opts) != MQTTCLIENT_SUCCESS)
+  if (MQTTClient_connect(mqtt_client, &conn_opts) != MQTTCLIENT_SUCCESS)
   {
     printf("Échec connexion broker\n");
     closeDatabase();
@@ -440,7 +475,7 @@ int main(int argc, char *argv[])
   printf("  Connecté au broker\n");
 
   printf("Abonnement à %s\n", app_config.mqtt.topic);
-  MQTTClient_subscribe(client, app_config.mqtt.topic, app_config.mqtt.qos);
+  MQTTClient_subscribe(mqtt_client, app_config.mqtt.topic, app_config.mqtt.qos);
   printf("  Abonné\n\n");
 
   if (app_config.display_messages)
@@ -453,8 +488,8 @@ int main(int argc, char *argv[])
     sleep(10);
   }
 
-  MQTTClient_disconnect(client, 10000);
-  MQTTClient_destroy(&client);
+  MQTTClient_disconnect(mqtt_client, 10000);
+  MQTTClient_destroy(&mqtt_client);
   closeDatabase();
 
   return 0;

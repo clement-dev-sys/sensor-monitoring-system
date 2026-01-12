@@ -6,7 +6,7 @@ void config_init_defaults(Config *cfg)
 
   // MQTT
   strcpy(cfg->mqtt.broker_address, "tcp://localhost:1883");
-  strcpy(cfg->mqtt.topic, "esp32/env");
+  strcpy(cfg->mqtt.topic, "esp32/data");
   strcpy(cfg->mqtt.client_id, "UnixSubscriber");
   cfg->mqtt.qos = 1;
   cfg->mqtt.keepalive_interval = 60;

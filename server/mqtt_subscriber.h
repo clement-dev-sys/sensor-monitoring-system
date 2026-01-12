@@ -16,6 +16,7 @@
 extern sqlite3 *db;
 extern sqlite3_stmt *insert_stmt;
 extern Config app_config;
+extern MQTTClient mqtt_client;
 
 typedef struct
 {
@@ -93,6 +94,16 @@ void closeDatabase(void);
  * @return 0 si succès, -1 en cas d'erreur
  */
 int parseAndStore(const Config *cfg, const char *jsonString);
+
+/**
+ * @brief Republie les données enrichies avec timestamp sur un nouveau topic
+ * @param temp Température
+ * @param press Pression
+ * @param hum Humidité
+ * @param timestamp Timestamp généré par le serveur
+ * @return 0 si succès, -1 en cas d'erreur
+ */
+int republishWithTimestamp(const char *timestamp, double temp, double press, int hum);
 
 // ===== MQTT =====
 

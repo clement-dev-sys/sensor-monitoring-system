@@ -3,7 +3,7 @@
 [mqtt]
 broker_address = "tcp://localhost:1883"
 broker_port = 1883
-topic = "esp32/env"
+topic = "esp32/data"
 client_id = "UnixSubscriber"
 qos = 1
 keepalive_interval = 60
@@ -61,5 +61,5 @@ mac_esp = "DE:AD:BE:EF:FE:ED"
 # ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
 broker_address_esp = "192.168.69.1"
 broker_port_esp = 1883
-topic_esp = "esp32/env"
+topic_esp = "esp32/data"
 qos_esp = 1
