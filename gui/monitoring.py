@@ -13,12 +13,11 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.init_ui()
-        self.load_stylesheet()
+        # self.load_stylesheet()
     
     def init_ui(self):
         # Configuration de la fenêtre principale
         self.setWindowTitle("Monitoring MQTT & SQLite")
-        self.setGeometry(100, 100, 1200, 800)
         
         # Widget central
         central_widget = QWidget()
