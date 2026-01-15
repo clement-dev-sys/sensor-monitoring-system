@@ -25,8 +25,8 @@ void config_init_defaults(Config *cfg)
   cfg->thresholds.temp_max = 30.0;
   cfg->thresholds.press_min = 980.0;
   cfg->thresholds.press_max = 1050.0;
-  cfg->thresholds.hum_min = 40;
-  cfg->thresholds.hum_max = 60;
+  cfg->thresholds.hum_min = 40.0;
+  cfg->thresholds.hum_max = 60.0;
 
   // Paths
   strcpy(cfg->paths.data_dir, "data");
@@ -176,16 +176,16 @@ int config_load(Config *cfg, const char *config_file)
         cfg->thresholds.press_max = max.u.d;
     }
 
-    toml_table_t *hum = toml_table_in(thresholds, "humidite");
+    toml_table_t *hum = toml_double_in(thresholds, "humidite");
     if (hum)
     {
-      toml_datum_t min = toml_int_in(hum, "min");
+      toml_datum_t min = toml_double_in(hum, "min");
       if (min.ok)
-        cfg->thresholds.hum_min = (int)min.u.i;
+        cfg->thresholds.hum_min = min.u.i;
 
-      toml_datum_t max = toml_int_in(hum, "max");
+      toml_datum_t max = toml_double_in(hum, "max");
       if (max.ok)
-        cfg->thresholds.hum_max = (int)max.u.i;
+        cfg->thresholds.hum_max = max.u.i;
     }
   }
 
@@ -268,7 +268,7 @@ void config_display(const Config *cfg)
          cfg->thresholds.temp_min, cfg->thresholds.temp_max);
   printf("  Pression : %.1f - %.1f hPa\n",
          cfg->thresholds.press_min, cfg->thresholds.press_max);
-  printf("  Humidité : %d%% - %d%%\n",
+  printf("  Humidité : %.1f - %.1f\n",
          cfg->thresholds.hum_min, cfg->thresholds.hum_max);
 
   printf("\n[Affichage]\n");

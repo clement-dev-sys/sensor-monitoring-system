@@ -53,7 +53,7 @@ void displaySeuils(const Config *cfg);
  * @param press Pression mesurée
  * @param hum Humidité mesurée
  */
-void checkSeuils(const Config *cfg, double temp, double press, int hum);
+void checkSeuils(const Config *cfg, double temp, double press, double hum);
 
 /**
  * @brief Enregistre une alerte ou un retour à la normale dans le fichier de log
@@ -79,7 +79,7 @@ int initDatabase(const Config *cfg);
  * @param hum Humidité
  * @return SQLITE_OK si succès, code d'erreur sinon
  */
-int insertData(const char *timestamp, double temp, double press, int hum);
+int insertData(const char *timestamp, double temp, double press, double hum);
 
 /**
  * @brief Ferme proprement la base de données et libère les statements
@@ -104,7 +104,7 @@ int parseAndStore(const Config *cfg, const char *jsonString);
  * @param timestamp Timestamp généré par le serveur
  * @return 0 si succès, -1 en cas d'erreur
  */
-int republishWithTimestamp(const char *timestamp, double temp, double press, int hum);
+int republishWithTimestamp(const char *timestamp, double temp, double press, double hum);
 
 // ===== MQTT =====
 

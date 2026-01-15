@@ -28,8 +28,8 @@ max = 24.0
 min = 980.0
 max = 1030.0
 [thresholds.humidite]
-min = 40
-max = 70
+min = 40.0
+max = 70.0
 
 [paths]
 data_dir = "data"
