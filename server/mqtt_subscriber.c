@@ -25,7 +25,7 @@ void displaySeuils(const Config *cfg)
          cfg->thresholds.temp_min, cfg->thresholds.temp_max);
   printf("  Pression : %.1f à %.1f hPa\n",
          cfg->thresholds.press_min, cfg->thresholds.press_max);
-  printf("  Humidité : %d%% à %d%%\n",
+  printf("  Humidité : %.1f à %.1f\n",
          cfg->thresholds.hum_min, cfg->thresholds.hum_max);
 }
 
@@ -53,7 +53,7 @@ void logAlert(const Config *cfg, const char *message)
   }
 }
 
-void checkSeuils(const Config *cfg, double temp, double press, int hum)
+void checkSeuils(const Config *cfg, double temp, double press, double hum)
 {
   char alert_msg[256];
 
@@ -136,7 +136,7 @@ void checkSeuils(const Config *cfg, double temp, double press, int hum)
   {
     if (!alert_state.hum_low_active)
     {
-      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Humidité trop basse (%d%% < %d%%)", hum, cfg->thresholds.hum_min);
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Humidité trop basse (%.1f < %.1f)", hum, cfg->thresholds.hum_min);
       logAlert(cfg, alert_msg);
       alert_state.hum_low_active = 1;
       alert_state.hum_high_active = 0;
@@ -146,7 +146,7 @@ void checkSeuils(const Config *cfg, double temp, double press, int hum)
   {
     if (!alert_state.hum_high_active)
     {
-      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Humidité trop élevée (%d%% > %d%%)", hum, cfg->thresholds.hum_max);
+      snprintf(alert_msg, sizeof(alert_msg), "ALERTE : Humidité trop élevée (%.1f > %.1f)", hum, cfg->thresholds.hum_max);
       logAlert(cfg, alert_msg);
       alert_state.hum_high_active = 1;
       alert_state.hum_low_active = 0;
@@ -156,13 +156,13 @@ void checkSeuils(const Config *cfg, double temp, double press, int hum)
   {
     if (alert_state.hum_low_active)
     {
-      snprintf(alert_msg, sizeof(alert_msg), "Humidité revenue à la normale (%d%%)", hum);
+      snprintf(alert_msg, sizeof(alert_msg), "Humidité revenue à la normale (%.1f)", hum);
       logAlert(cfg, alert_msg);
       alert_state.hum_low_active = 0;
     }
     else if (alert_state.hum_high_active)
     {
-      snprintf(alert_msg, sizeof(alert_msg), "Humidité revenue à la normale (%d%%)", hum);
+      snprintf(alert_msg, sizeof(alert_msg), "Humidité revenue à la normale (%.1f)", hum);
       logAlert(cfg, alert_msg);
       alert_state.hum_high_active = 0;
     }
@@ -201,7 +201,7 @@ int initDatabase(const Config *cfg)
       "timestamp TEXT NOT NULL,"
       "temperature REAL,"
       "pression REAL,"
-      "humidite INTEGER"
+      "humidite REAL"
       ");";
 
   rc = sqlite3_exec(db, table_sql, NULL, NULL, &errMsg);
@@ -250,7 +250,7 @@ int initDatabase(const Config *cfg)
   return SQLITE_OK;
 }
 
-int insertData(const char *timestamp, double temp, double press, int hum)
+int insertData(const char *timestamp, double temp, double press, double hum)
 {
   if (!insert_stmt)
   {
@@ -318,14 +318,14 @@ int parseAndStore(const Config *cfg, const char *jsonString)
 
   double temperature = json_object_get_double(temp_obj);
   double pression = json_object_get_double(press_obj);
-  int humidite = json_object_get_int(hum_obj);
+  int humidite = json_object_get_double(hum_obj);
 
   if (app_config.display_messages)
   {
     printf("Données parsées :\n");
     printf(" - Température : %.1f °C\n", temperature);
     printf(" - Pression : %.1f hPa\n", pression);
-    printf(" - Humidité : %d %%\n", humidite);
+    printf(" - Humidité : %.1f %%\n", humidite);
   }
 
   checkSeuils(cfg, temperature, pression, humidite);
@@ -349,14 +349,14 @@ int parseAndStore(const Config *cfg, const char *jsonString)
   return result;
 }
 
-int republishWithTimestamp(const char *timestamp, double temp, double press, int hum)
+int republishWithTimestamp(const char *timestamp, double temp, double press, double hum)
 {
   const char *republish_topic = "server/data"; // TODO - Ajouter config.toml
 
   struct json_object *json_obj = json_object_new_object();
-  
+
   json_object_object_add(json_obj, "timestamp", json_object_new_string(timestamp));
-  
+
   char temp_str[16];
   snprintf(temp_str, sizeof(temp_str), "%.1f", temp);
   json_object_object_add(json_obj, "temperature", json_object_new_string(temp_str));
@@ -364,9 +364,9 @@ int republishWithTimestamp(const char *timestamp, double temp, double press, int
   char press_str[16];
   snprintf(press_str, sizeof(press_str), "%.1f", press);
   json_object_object_add(json_obj, "pression", json_object_new_string(press_str));
-  
+
   char hum_str[8];
-  snprintf(hum_str, sizeof(hum_str), "%d", hum);
+  snprintf(hum_str, sizeof(hum_str), "%.1f", hum);
   json_object_object_add(json_obj, "humidite", json_object_new_string(hum_str));
 
   const char *json_string = json_object_to_json_string(json_obj);
@@ -396,10 +396,10 @@ int republishWithTimestamp(const char *timestamp, double temp, double press, int
 
   json_object_put(json_obj);
 
-  if (rc == MQTTCLIENT_SUCCESS) 
+  if (rc == MQTTCLIENT_SUCCESS)
   {
     printf("=== Message republié ===\n");
-  }  
+  }
 
   return (rc == MQTTCLIENT_SUCCESS) ? 0 : -1;
 }

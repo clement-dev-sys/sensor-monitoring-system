@@ -41,8 +41,8 @@ typedef struct
   double temp_max;
   double press_min;
   double press_max;
-  int hum_min;
-  int hum_max;
+  double hum_min;
+  double hum_max;
 } ThresholdsConfig;
 
 typedef struct

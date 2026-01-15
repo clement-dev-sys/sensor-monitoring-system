@@ -73,6 +73,12 @@ class RealtimeTab(QWidget):
             'port': 1883,
             'topic': 'server/data'
         }
+        self.data_history = {
+            'temperature': [],
+            'pression': [],
+            'humidite': []
+        }
+        self.max_history = 20
         self.init_ui()
     
     def init_ui(self):
@@ -105,25 +111,16 @@ class RealtimeTab(QWidget):
         data_group = QGroupBox("Données reçues")
         data_layout = QVBoxLayout()
         data_group.setLayout(data_layout)
-        
-        timestamp_layout = QHBoxLayout()
-        self.timestamp_label = []
-        timestamp_label = QLabel("Heure UTC : ")
-        timestamp_label.setMinimumWidth(150)
-        timestamp_layout.addWidget(timestamp_label)
-        self.value_timestamp = QLabel("-")
-        self.value_timestamp.setMinimumWidth(550)
-        timestamp_layout.addWidget(self.value_timestamp)
-        data_layout.addLayout(timestamp_layout)
-        
+               
         self.data_labels = []
-        for i in range(3):
+        for i in range(4):
             row_layout = QHBoxLayout()
 
             key_label = QLabel("")
-            if i == 0: key_label.setText("Température : ")
-            elif i == 1: key_label.setText("Pression : ")
-            elif i == 2: key_label.setText("Humidité : ")
+            if i == 0: key_label.setText("Heure UTC : ")
+            elif i == 1: key_label.setText("Température : ")
+            elif i == 2: key_label.setText("Pression : ")
+            elif i == 3: key_label.setText("Humidité : ")
             key_label.setMinimumWidth(150)
             row_layout.addWidget(key_label)
 
@@ -132,14 +129,17 @@ class RealtimeTab(QWidget):
             row_layout.addWidget(value_label)
             
             moy_label = QLabel("-")
+            if i == 0: moy_label.setText("Moyenne")
             moy_label.setMinimumWidth(150)
             row_layout.addWidget(moy_label)
             
             max_label = QLabel("-")
+            if i == 0: max_label.setText("Max")
             max_label.setMinimumWidth(150)
             row_layout.addWidget(max_label)
             
             min_label = QLabel("-")
+            if i == 0: min_label.setText("Min")
             row_layout.addWidget(min_label)
 
             row_layout.addStretch()
@@ -192,19 +192,57 @@ class RealtimeTab(QWidget):
     def display_message(self, message):
         try:
             data = json.loads(message)
-            
+
+            key_mapping = {
+                0: None,
+                1: 'temperature',
+                2: 'pression',
+                3: 'humidite'
+            }
+
             for i, (key, value) in enumerate(data.items()):
-                if i == 0 :
-                    self.value_timestamp.setText(str(value))
-                elif i < len(self.data_labels):
-                    self.data_labels[i-1][1].setText(str(value))
+                if i < len(self.data_labels):
+                    self.data_labels[i][1].setText(str(value))
+
+                    if i != 0 and key_mapping[i]:
+                        data_key = key_mapping[i]
+                        try:
+                            num_value = float(value)
+
+                            self.data_history[data_key].append(num_value)
+                            if len(self.data_history[data_key]) > self.max_history:
+                                self.data_history[data_key].pop(0)
+
+                            values = self.data_history[data_key]
+                            if len(values) > 0:
+                                moy = sum(values) / len(values)
+                                max_val = max(values)
+                                min_val = min(values)
+
+                                self.data_labels[i][2].setText(f"{moy:.1f} ({len(values)})")
+                                self.data_labels[i][3].setText(f"{max_val:.1f}")
+                                self.data_labels[i][4].setText(f"{min_val:.1f}")
+                        except ValueError:
+                            self.data_labels[i][2].setText("-")
+                            self.data_labels[i][3].setText("-")
+                            self.data_labels[i][4].setText("-")
+                        
         except json.JSONDecodeError as e:
             self.data_labels[0][1].setText(f"Erreur JSON : {str(e)}")
     
     def clear_display(self):
-        self.value_timestamp.setText("-")
-        for i in range(3):
+        self.data_history = {
+            'temperature': [],
+            'pression': [],
+            'humidite': []
+        }
+        for i in range(4):
             self.data_labels[i][1].setText("-")
+            if i != 0:
+                self.data_labels[i][2].setText("-")
+                self.data_labels[i][3].setText("-")
+                self.data_labels[i][4].setText("-")
+
     
     def closeEvent(self, event):
         if self.is_connected:
