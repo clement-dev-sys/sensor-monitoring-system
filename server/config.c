@@ -176,16 +176,16 @@ int config_load(Config *cfg, const char *config_file)
         cfg->thresholds.press_max = max.u.d;
     }
 
-    toml_table_t *hum = toml_double_in(thresholds, "humidite");
+    toml_table_t *hum = toml_table_in(thresholds, "humidite");
     if (hum)
     {
       toml_datum_t min = toml_double_in(hum, "min");
       if (min.ok)
-        cfg->thresholds.hum_min = min.u.i;
+        cfg->thresholds.hum_min = min.u.d;
 
       toml_datum_t max = toml_double_in(hum, "max");
       if (max.ok)
-        cfg->thresholds.hum_max = max.u.i;
+        cfg->thresholds.hum_max = max.u.d;
     }
   }
 

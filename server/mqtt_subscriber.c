@@ -318,7 +318,7 @@ int parseAndStore(const Config *cfg, const char *jsonString)
 
   double temperature = json_object_get_double(temp_obj);
   double pression = json_object_get_double(press_obj);
-  int humidite = json_object_get_double(hum_obj);
+  double humidite = json_object_get_double(hum_obj);
 
   if (app_config.display_messages)
   {
