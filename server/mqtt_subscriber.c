@@ -319,19 +319,13 @@ int main(int argc, char *argv[])
   conn_opts.keepAliveInterval = app_config.mqtt.keepalive_interval;
   conn_opts.cleansession = 1;
 
-  printf("Connexion au broker MQTT (%s)...\n", app_config.mqtt.broker_address);
   if (MQTTClient_connect(mqtt_client, &conn_opts) != MQTTCLIENT_SUCCESS)
   {
-    printf("  Échec connexion broker\n");
+    printf("Échec connexion broker\n");
     closeDatabase();
     exit(EXIT_FAILURE);
   }
-
-  printf("  Connecté au broker\n");
-
-  printf("Abonnement à %s\n", app_config.mqtt.topic);
   MQTTClient_subscribe(mqtt_client, app_config.mqtt.topic, app_config.mqtt.qos);
-  printf("  Abonné\n\n");
 
   printf("En attente des données ESP32...\n");
 

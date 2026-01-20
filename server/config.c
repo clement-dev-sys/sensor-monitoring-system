@@ -188,7 +188,7 @@ void config_resolve_path(const Config *cfg, const char *relative_path, char *out
 
 void config_display(const Config *cfg)
 {
-  printf("\n=== Configuration chargée ===\n");
+  printf("\n--- Configuration chargée ---\n");
   printf("Racine projet : %s\n\n", cfg->project_root);
 
   printf("[MQTT]\n");
@@ -208,5 +208,5 @@ void config_display(const Config *cfg)
   printf("  Cleanup : %s\n", cfg->logging.cleanup_log);
   printf("  Messages : %s\n", cfg->logging.display_messages ? "activé" : "désactivé");
 
-  printf("\n=============================\n\n");
+  printf("\n-----------------------------\n\n");
 }

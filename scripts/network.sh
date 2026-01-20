@@ -19,6 +19,8 @@ SERVER_IP=$(parse_toml "ip_server")
 ESP32_IP=$(parse_toml "ip_esp")
 MQTT_PORT=$(parse_toml "broker_port")
 
+echo "=== NETWORK CHECK ==="
+
 echo "Configuration chargée : "
 echo "  Interface serveur : $SERVER_INTERFACE"
 echo "  IP serveur        : $SERVER_IP"
@@ -92,9 +94,10 @@ fi
 
 echo ""
 if [ $ERRORS -eq 0 ]; then
-  echo "Configuration réseau OK"
+  echo "=== NETWORK OK ==="
   exit 0
 else
+  echo "=== ERROR ==="
   echo "$ERRORS erreur(s) détectée(s)"
   exit 1
 fi
