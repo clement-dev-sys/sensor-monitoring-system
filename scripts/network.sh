@@ -88,8 +88,6 @@ if command -v mosquitto_sub >/dev/null 2>&1; then
     echo "  ERR : Échec connexion MQTT"
     ((ERRORS++))
   fi
-else
-  echo "  Mosquitto non installé (test ignoré)"
 fi
 
 echo ""

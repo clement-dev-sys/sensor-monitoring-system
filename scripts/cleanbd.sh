@@ -32,8 +32,6 @@ if [ ! -f "$DB_FILE" ]; then
   exit 1
 fi
 
-log "=== Nettoyage ==="
-
 TOTAL_DELETED=0
 
 while true; do
@@ -54,11 +52,9 @@ while true; do
 done
 
 if [ "$TOTAL_DELETED" -gt 0 ]; then
+  log "=== Nettoyage ==="
   log "Total supprimé : $TOTAL_DELETED lignes"
+  log "=== Terminé ==="
   
   sqlite3 "$DB_FILE" "PRAGMA incremental_vacuum(200);"
-else
-  log "Aucune donnée à supprimer"
 fi
-
-log "=== Terminé ==="

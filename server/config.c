@@ -7,6 +7,7 @@ void config_init_defaults(Config *cfg)
   // MQTT
   strcpy(cfg->mqtt.broker_address, "tcp://localhost:1883");
   strcpy(cfg->mqtt.topic, "esp32/data");
+  strcpy(cfg->mqtt.topic, "server/data");
   strcpy(cfg->mqtt.client_id, "UnixSubscriber");
   cfg->mqtt.qos = 1;
   cfg->mqtt.keepalive_interval = 60;
@@ -17,29 +18,18 @@ void config_init_defaults(Config *cfg)
   cfg->database.cleanup_batch_size = 2000;
 
   // Logging
-  strcpy(cfg->logging.alert_file, "data/alertes.log");
   strcpy(cfg->logging.cleanup_log, "scripts/cleanbd.log");
-
-  // Thresholds
-  cfg->thresholds.temp_min = 15.0;
-  cfg->thresholds.temp_max = 30.0;
-  cfg->thresholds.press_min = 980.0;
-  cfg->thresholds.press_max = 1050.0;
-  cfg->thresholds.hum_min = 40.0;
-  cfg->thresholds.hum_max = 60.0;
+  cfg->logging.display_messages = 1;
 
   // Paths
   strcpy(cfg->paths.data_dir, "data");
   strcpy(cfg->paths.scripts_dir, "scripts");
   strcpy(cfg->paths.server_dir, "server");
-
-  // Affichage
-  cfg->display_messages = 1;
 }
 
 static void get_project_root(const char *config_file, char *root, size_t root_size)
 {
-  char abs_path[PATH];
+  char abs_path[PATH_SIZE];
   if (realpath(config_file, abs_path) == NULL)
   {
     getcwd(root, root_size);
@@ -93,6 +83,13 @@ int config_load(Config *cfg, const char *config_file)
       free(topic.u.s);
     }
 
+    toml_datum_t topic_republish = toml_string_in(mqtt, "topic_republish");
+    if (topic.ok)
+    {
+      strncpy(cfg->mqtt.topic_republish, topic.u.s, sizeof(cfg->mqtt.topic_republish) - 1);
+      free(topic.u.s);
+    }
+
     toml_datum_t client_id = toml_string_in(mqtt, "client_id");
     if (client_id.ok)
     {
@@ -133,59 +130,17 @@ int config_load(Config *cfg, const char *config_file)
   toml_table_t *logging = toml_table_in(conf, "logging");
   if (logging)
   {
-    toml_datum_t alert = toml_string_in(logging, "alert_file");
-    if (alert.ok)
-    {
-      strncpy(cfg->logging.alert_file, alert.u.s, sizeof(cfg->logging.alert_file) - 1);
-      free(alert.u.s);
-    }
-
     toml_datum_t cleanup = toml_string_in(logging, "cleanup_log");
     if (cleanup.ok)
     {
       strncpy(cfg->logging.cleanup_log, cleanup.u.s, sizeof(cfg->logging.cleanup_log) - 1);
       free(cleanup.u.s);
     }
-  }
 
-  // ===== SECTION [thresholds] =====
-  toml_table_t *thresholds = toml_table_in(conf, "thresholds");
-  if (thresholds)
-  {
-    toml_table_t *temp = toml_table_in(thresholds, "temperature");
-    if (temp)
+    toml_datum_t display = toml_bool_in(logging, "display");
+    if (display.ok)
     {
-      toml_datum_t min = toml_double_in(temp, "min");
-      if (min.ok)
-        cfg->thresholds.temp_min = min.u.d;
-
-      toml_datum_t max = toml_double_in(temp, "max");
-      if (max.ok)
-        cfg->thresholds.temp_max = max.u.d;
-    }
-
-    toml_table_t *press = toml_table_in(thresholds, "pression");
-    if (press)
-    {
-      toml_datum_t min = toml_double_in(press, "min");
-      if (min.ok)
-        cfg->thresholds.press_min = min.u.d;
-
-      toml_datum_t max = toml_double_in(press, "max");
-      if (max.ok)
-        cfg->thresholds.press_max = max.u.d;
-    }
-
-    toml_table_t *hum = toml_table_in(thresholds, "humidite");
-    if (hum)
-    {
-      toml_datum_t min = toml_double_in(hum, "min");
-      if (min.ok)
-        cfg->thresholds.hum_min = min.u.d;
-
-      toml_datum_t max = toml_double_in(hum, "max");
-      if (max.ok)
-        cfg->thresholds.hum_max = max.u.d;
+      cfg->logging.display_messages = display.u.b;
     }
   }
 
@@ -215,17 +170,6 @@ int config_load(Config *cfg, const char *config_file)
     }
   }
 
-  // ===== SECTION [affichage] =====
-  toml_table_t *affichage = toml_table_in(conf, "affichage");
-  if (affichage)
-  {
-    toml_datum_t display = toml_bool_in(affichage, "display");
-    if (display.ok)
-    {
-      cfg->display_messages = display.u.b;
-    }
-  }
-
   toml_free(conf);
   return 0;
 }
@@ -250,6 +194,7 @@ void config_display(const Config *cfg)
   printf("[MQTT]\n");
   printf("  Broker : %s\n", cfg->mqtt.broker_address);
   printf("  Topic : %s\n", cfg->mqtt.topic);
+  printf("  Topic republish : %s\n", cfg->mqtt.topic_republish);
   printf("  Client ID : %s\n", cfg->mqtt.client_id);
   printf("  QoS : %d\n", cfg->mqtt.qos);
   printf("  Keepalive : %d s\n", cfg->mqtt.keepalive_interval);
@@ -260,19 +205,8 @@ void config_display(const Config *cfg)
   printf("  Batch cleanup : %d\n", cfg->database.cleanup_batch_size);
 
   printf("\n[Logging]\n");
-  printf("  Alertes : %s\n", cfg->logging.alert_file);
   printf("  Cleanup : %s\n", cfg->logging.cleanup_log);
-
-  printf("\n[Seuils]\n");
-  printf("  Température : %.1f°C - %.1f°C\n",
-         cfg->thresholds.temp_min, cfg->thresholds.temp_max);
-  printf("  Pression : %.1f - %.1f hPa\n",
-         cfg->thresholds.press_min, cfg->thresholds.press_max);
-  printf("  Humidité : %.1f - %.1f\n",
-         cfg->thresholds.hum_min, cfg->thresholds.hum_max);
-
-  printf("\n[Affichage]\n");
-  printf("  Messages : %s\n", cfg->display_messages ? "activé" : "désactivé");
+  printf("  Messages : %s\n", cfg->logging.display_messages ? "activé" : "désactivé");
 
   printf("\n=============================\n\n");
 }

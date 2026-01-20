@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-#define PATH 256
+#define PATH_SIZE 256
 
 // ===== STRUCTURES DE CONFIGURATION =====
 
@@ -17,6 +17,7 @@ typedef struct
 {
   char broker_address[256];
   char topic[128];
+  char topic_republish[128];
   char client_id[64];
   int qos;
   int keepalive_interval;
@@ -31,19 +32,9 @@ typedef struct
 
 typedef struct
 {
-  char alert_file[512];
   char cleanup_log[512];
+  int display_messages;
 } LoggingConfig;
-
-typedef struct
-{
-  double temp_min;
-  double temp_max;
-  double press_min;
-  double press_max;
-  double hum_min;
-  double hum_max;
-} ThresholdsConfig;
 
 typedef struct
 {
@@ -58,10 +49,8 @@ typedef struct
   MqttConfig mqtt;
   DatabaseConfig database;
   LoggingConfig logging;
-  ThresholdsConfig thresholds;
   PathsConfig paths;
   char project_root[512];
-  int display_messages;
 } Config;
 
 // ===== FONCTIONS =====

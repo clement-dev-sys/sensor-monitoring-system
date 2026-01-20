@@ -1,15 +1,19 @@
 # ===== CONFIGURATION SENSOR MONITORING SYSTEM =====
 
+# === SERVER ===
+
 [mqtt]
 broker_address = "tcp://localhost:1883"
-broker_port = 1883
 topic = "esp32/data"
-client_id = "UnixSubscriber"
+topic_republish = "server/data"
+client_id = "Server"
 qos = 1
 keepalive_interval = 60
 
-[affichage]
-display = true
+[network]
+interface_server = "enp0s25"
+ip_server = "192.168.69.1"
+ip_esp = "192.168.69.2"
 
 [database]
 path = "data/donnees_esp32.db"
@@ -17,29 +21,29 @@ retention_hours = 3
 cleanup_batch_size = 2000
 
 [logging]
-alert_file = "data/alertes.log"
 cleanup_log = "scripts/cleanbd.log"
-
-[thresholds]
-[thresholds.temperature]
-min = 17.0
-max = 24.0
-[thresholds.pression]
-min = 980.0
-max = 1030.0
-[thresholds.humidite]
-min = 40.0
-max = 70.0
+display = true
 
 [paths]
 data_dir = "data"
 scripts_dir = "scripts"
 server_dir = "server"
 
-[network]
-interface_server = "enp0s25"
-ip_server = "192.168.69.1"
+# === ESP32 ===
+
+[mqtt_esp32]
+# ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
+broker_address_esp = "192.168.69.1"
+broker_port_esp = 1883
+topic_esp = "esp32/data"
+qos_esp = 1
+
+[network_esp32]
+# ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS esp32/src/main.cpp
 ip_esp = "192.168.69.2"
+gateway_esp = "192.168.69.1"
+subnet_esp = "255.255.255.0"
+mac_esp = "DE:AD:BE:EF:FE:ED"
 
 [timing]
 # ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
@@ -49,17 +53,3 @@ reconnect_interval = 15000
 [failures]
 # ATTENTION CETTE VALEUR DOIT ÊTRE CODÉE EN DUR DANS main.cpp
 max_failures = 3
-
-[network_esp32]
-# ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
-ip_esp = "192.168.69.2"
-gateway_esp = "192.168.69.1"
-subnet_esp = "255.255.255.0"
-mac_esp = "DE:AD:BE:EF:FE:ED"
-
-[mqtt_esp32]
-# ATTENTION CES VALEURS DOIVENT ÊTRE CODÉES EN DUR DANS main.cpp
-broker_address_esp = "192.168.69.1"
-broker_port_esp = 1883
-topic_esp = "esp32/data"
-qos_esp = 1

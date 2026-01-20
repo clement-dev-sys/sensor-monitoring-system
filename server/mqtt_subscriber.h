@@ -19,16 +19,6 @@ extern sqlite3_stmt *insert_stmt;
 extern Config app_config;
 extern MQTTClient mqtt_client;
 
-typedef struct
-{
-    int temp_low_active;
-    int temp_high_active;
-    int press_low_active;
-    int press_high_active;
-    int hum_low_active;
-    int hum_high_active;
-} AlertState;
-
 // ===== DATE UTC =====
 
 /**
@@ -37,30 +27,6 @@ typedef struct
  * @param size Taille du buffer
  */
 void getUTCTimestamp(char *buffer, size_t size);
-
-// ===== SEUILS =====
-
-/**
- * @brief Affiche les seuils chargés dans la console
- * @param cfg Configuration contenant les seuils
- */
-void displaySeuils(const Config *cfg);
-
-/**
- * @brief Vérifie si les valeurs dépassent les seuils et génère des alertes sur transition
- * @param cfg Configuration
- * @param temp Température mesurée
- * @param press Pression mesurée
- * @param hum Humidité mesurée
- */
-void checkSeuils(const Config *cfg, double temp, double press, double hum);
-
-/**
- * @brief Enregistre une alerte ou un retour à la normale dans le fichier de log
- * @param cfg Configuration
- * @param message Message à logger
- */
-void logAlert(const Config *cfg, const char *message);
 
 // ===== BASE DE DONNÉES =====
 

@@ -8,12 +8,12 @@ Système embarqué de monitoring environnemental avec ESP32 et capteur BME280 ai
 
 ## Objectifs
 
-Acquisition en temps réel de données environnementales : température, humidité, pression. Puis transmission réseau et stockage des données avec système d'alertes automatique.
+Acquisition en temps réel de données environnementales : température, humidité, pression. Puis transmission réseau et stockage des données.
 
 ## Technologies
 
-- **Embarqué** : ESP32, W5500 (Ethernet), BME280, C++, PlatformIO
-- **Serveur** : C, MQTT (Paho), SQLite3, TOML, Makefile
+- **Embarqué** : ESP32, W5500, BME280, C++, PlatformIO
+- **Serveur** : C, MQTT, SQLite3, TOML, Makefile
 - **Système** : Arch Linux, Mosquitto broker, Bash
 
 ## Architecture
@@ -21,8 +21,7 @@ Acquisition en temps réel de données environnementales : température, humidit
 ```
 ESP32 --- MQTT --- Broker Mosquitto --- MQTT --- Subscriber --- SQLite
 (BME280)           (localhost:1883)              (Unix server)  (data/)
-(W5500)            (192.168.69.0/24)                               |
-                                                                   |--- Alertes (alertes.log)
+(W5500)            (192.168.69.0/24)
 ```
 
 ## Câblage
@@ -53,8 +52,10 @@ ESP32 --- MQTT --- Broker Mosquitto --- MQTT --- Subscriber --- SQLite
 ```
 sensor-monitoring-system/
 |-- esp32/                        # Code C++ ESP32 (PlatformIO)
-|   |-- main.cpp                    # Publisher MQTT + gestion réseau
-|   |-- main.h                      # Configurations et définitions
+|   |-- src/                        # Dossier source
+|   |   |-- main.cpp                  # Publisher MQTT + gestion réseau
+|   |-- include/                        # Dossier headers
+|   |   |-- main.h                      # Configurations et définitions
 |   |-- platformio.ini              # Config PlatformIO
 |-- server/                       # Serveur C de réception
 |   |-- mqtt_subscriber.c           # Subscriber MQTT + stockage
@@ -63,14 +64,12 @@ sensor-monitoring-system/
 |   |-- config.h                    # Configurations et définitions
 |-- data/                         # Base de données (SQLite3)
 |   |-- donnees_esp32.db            # Mesures environnementales
-|   |-- alertes.log                 # Journal des alertes
 |-- scripts/                      # Scripts utilitaires
 |   |-- network.sh                  # Validation configuration réseau
 |   |-- cleanbd.sh                  # Cleanup base de données
 |   |-- cleanbd.log                 # Journal de rotation des données
 |-- Makefile                      # Build automatique pour le serveur
 |-- config.toml                   # Fichier de configuration centralisé
-|-- Sensor_monitoring_system.pdf  # Documentation complète
 |-- README.md
 ```
 
@@ -80,7 +79,7 @@ sensor-monitoring-system/
 
 **OS requis :** Arch Linux (ou dérivé avec `pacman` et `yay`)
 
-> **Note :** Le projet peut fonctionner sur d'autres distributions Linux, mais les commandes d'installation devront être adaptées (apt, dnf, etc.)
+> **Note :** Le projet peut fonctionner sur d'autres distributions Linux, mais les commandes d'installation devront être adaptées (apt, dnf, etc..)
 
 ### 1. Configuration réseau
 
@@ -174,21 +173,6 @@ make cleanall    # Nettoyer tout (data/ inclus)
 
 ### Configuration principale (`config.toml`)
 
-**Seuils d'alerte** (ajustez selon vos besoins) :
-```toml
-[thresholds.temperature]
-min = 17.0    # Alerte si < 17°C
-max = 24.0    # Alerte si > 24°C
-
-[thresholds.pression]
-min = 980.0   # Alerte si < 980 hPa
-max = 1030.0  # Alerte si > 1030 hPa
-
-[thresholds.humidite]
-min = 40      # Alerte si < 40%
-max = 70      # Alerte si > 70%
-```
-
 **Rétention des données** :
 ```toml
 [database]
@@ -211,8 +195,9 @@ display = false    # true pour afficher les messages reçus sur le terminal serv
 make run
 
 # Ou manuellement
+make
 bash scripts/network.sh    # Valider la config réseau
-./build/mqtt_subscriber config.toml
+./build/mqtt_subscriber config.toml & disown
 ```
 
 #### 2. Flasher l'ESP32
@@ -257,7 +242,7 @@ CREATE TABLE mesures (
   timestamp TEXT NOT NULL,           -- Format: "YYYY-MM-DD HH:MM:SS" (UTC)
   temperature REAL,                  -- °C
   pression REAL,                     -- hPa
-  humidite INTEGER                   -- %
+  humidite REAL                      -- %
 );
 ```
 
@@ -320,10 +305,6 @@ En cas de problème de connexion :
 # Vérification de la communication réseau entre l'ESP et le Serveur
 bash scripts/network.sh
 ```
-
-## Documentation complète
-
-Voir `Sensor_monitoring_system.pdf` pour la documentation technique détaillée.
 
 ## Licence
 

@@ -87,7 +87,7 @@ void setupMQTT()
 
   mqttClient.setBufferSize(512);
 
-  Serial.println("MQTT configuré (QoS 1)");
+  Serial.println("MQTT configuré");
 }
 
 void displayNetworkInfo()
