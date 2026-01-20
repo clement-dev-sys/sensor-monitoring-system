@@ -48,7 +48,6 @@ while true; do
   [ "$DELETED" -eq 0 ] && break
 
   TOTAL_DELETED=$((TOTAL_DELETED + DELETED))
-  log "Batch supprimé : $DELETED lignes"
 done
 
 if [ "$TOTAL_DELETED" -gt 0 ]; then

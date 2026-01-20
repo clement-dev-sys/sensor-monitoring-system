@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QTextEdit, QGroupBox)
+                             QPushButton, QGroupBox)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 import paho.mqtt.client as mqtt
 import json
-from datetime import datetime
 
 class MQTTThread(QThread):
     """Thread pour gérer la connexion MQTT sans bloquer l'interface"""
@@ -64,21 +63,23 @@ class RealtimeTab(QWidget):
     - Réception des données du serveur C
     - Affichage en temps réel
     """
+    status_changed = pyqtSignal(bool, str)
+    
     def __init__(self):
         super().__init__()
         self.mqtt_thread = None
         self.is_connected = False
         self.mqtt_config = {
-            'host': '192.168.1.100',
-            'port': 1883,
-            'topic': 'server/data'
+            'host': None,
+            'port': None,
+            'topic': None
         }
         self.data_history = {
             'temperature': [],
             'pression': [],
             'humidite': []
         }
-        self.max_history = 20
+        self.max_history = 2160
         self.init_ui()
     
     def init_ui(self):
@@ -86,26 +87,8 @@ class RealtimeTab(QWidget):
         self.setLayout(layout)
         
         # Titre
-        title = QLabel("Données en Temps Réel (MQTT)")
-        title.setObjectName("pageTitle")
+        title = QLabel("Données en Temps Réel")
         layout.addWidget(title)
-        
-        # Statut de connexion
-        status_group = QGroupBox("Statut de connexion")
-        status_layout = QHBoxLayout()
-        status_group.setLayout(status_layout)
-        
-        self.status_label = QLabel("Déconnecté")
-        self.status_label.setObjectName("statusLabel")
-        status_layout.addWidget(self.status_label)
-        
-        self.connect_btn = QPushButton("Connecter")
-        self.connect_btn.setObjectName("actionButton")
-        self.connect_btn.clicked.connect(self.toggle_connection)
-        status_layout.addWidget(self.connect_btn)
-        
-        status_layout.addStretch()
-        layout.addWidget(status_group)
         
         # Affichage des données
         data_group = QGroupBox("Données reçues")
@@ -125,8 +108,30 @@ class RealtimeTab(QWidget):
             row_layout.addWidget(key_label)
 
             value_label = QLabel("-")
-            value_label.setMinimumWidth(150)
             row_layout.addWidget(value_label)
+            
+            row_layout.addStretch()
+
+            self.data_labels.append((key_label, value_label))
+            data_layout.addLayout(row_layout)
+      
+        layout.addWidget(data_group)
+        
+        # Affichage des statistiques
+        stats_group = QGroupBox("Statistiques")
+        stats_layout = QVBoxLayout()
+        stats_group.setLayout(stats_layout)
+               
+        self.stats_labels = []
+        for i in range(4):
+            row_layout = QHBoxLayout()
+
+            key_label = QLabel("")
+            if i == 1: key_label.setText("Température : ")
+            elif i == 2: key_label.setText("Pression : ")
+            elif i == 3: key_label.setText("Humidité : ")
+            key_label.setMinimumWidth(150)
+            row_layout.addWidget(key_label)
             
             moy_label = QLabel("-")
             if i == 0: moy_label.setText("Moyenne")
@@ -144,14 +149,13 @@ class RealtimeTab(QWidget):
 
             row_layout.addStretch()
 
-            self.data_labels.append((key_label, value_label, moy_label, max_label, min_label))
-            data_layout.addLayout(row_layout)
+            self.stats_labels.append((key_label, moy_label, max_label, min_label))
+            stats_layout.addLayout(row_layout)
       
-        layout.addWidget(data_group)
+        layout.addWidget(stats_group)
         
         # Effacer
         clear_btn = QPushButton("Effacer")
-        clear_btn.setObjectName("secondaryButton")
         clear_btn.clicked.connect(self.clear_display)
         layout.addWidget(clear_btn, alignment=Qt.AlignRight)
        
@@ -172,22 +176,22 @@ class RealtimeTab(QWidget):
             self.mqtt_thread.connection_status.connect(self.update_connection_status)
             self.mqtt_thread.start()
         except Exception as e:
-            self.status_label.setText(f"Erreur : {str(e)}")
+            self.status_changed.emit(False, f"Erreur : {str(e)}")
     
     def disconnect_mqtt(self):
         if self.mqtt_thread:
             self.mqtt_thread.stop()
             self.mqtt_thread.wait()
             self.mqtt_thread = None
+            
+    def update_mqtt_config(self, host, port, topic):
+        self.mqtt_config['host'] = host
+        self.mqtt_config['port'] = port
+        self.mqtt_config['topic'] = topic
     
     def update_connection_status(self, connected, message):
         self.is_connected = connected
-        self.status_label.setText(message)
-        
-        if connected:
-            self.connect_btn.setText("Déconnecter")
-        else:
-            self.connect_btn.setText("Connecter")
+        self.status_changed.emit(connected, message)
     
     def display_message(self, message):
         try:
@@ -219,31 +223,30 @@ class RealtimeTab(QWidget):
                                 max_val = max(values)
                                 min_val = min(values)
 
-                                self.data_labels[i][2].setText(f"{moy:.1f} ({len(values)})")
-                                self.data_labels[i][3].setText(f"{max_val:.1f}")
-                                self.data_labels[i][4].setText(f"{min_val:.1f}")
+                                self.stats_labels[i][1].setText(f"{moy:.2f}")
+                                self.stats_labels[i][2].setText(f"{max_val:.2f}")
+                                self.stats_labels[i][3].setText(f"{min_val:.2f}")
                         except ValueError:
-                            self.data_labels[i][2].setText("-")
-                            self.data_labels[i][3].setText("-")
-                            self.data_labels[i][4].setText("-")
+                            self.stats_labels[i][2].setText("-")
+                            self.stats_labels[i][3].setText("-")
+                            self.stats_labels[i][4].setText("-")
                         
         except json.JSONDecodeError as e:
             self.data_labels[0][1].setText(f"Erreur JSON : {str(e)}")
     
     def clear_display(self):
+        for i in range(4):
+            self.data_labels[i][1].setText("-")
+        
         self.data_history = {
             'temperature': [],
             'pression': [],
             'humidite': []
         }
-        for i in range(4):
-            self.data_labels[i][1].setText("-")
-            if i != 0:
-                self.data_labels[i][2].setText("-")
-                self.data_labels[i][3].setText("-")
-                self.data_labels[i][4].setText("-")
-
-    
+        for i in range(1, 4):
+            for j in range(1, 4):
+                self.stats_labels[i][j].setText("-")
+   
     def closeEvent(self, event):
         if self.is_connected:
             self.disconnect_mqtt()

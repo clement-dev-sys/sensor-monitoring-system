@@ -22,7 +22,7 @@ cleanup_batch_size = 2000
 
 [logging]
 cleanup_log = "scripts/cleanbd.log"
-display = true
+display = false
 
 [paths]
 data_dir = "data"
