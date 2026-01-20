@@ -140,7 +140,7 @@ void closeDatabase(void)
 
 // ===== JSON =====
 
-int parseAndStore(const Config *cfg, const char *jsonString)
+int parseAndStore(const char *jsonString)
 {
   struct json_object *parsed_json;
   struct json_object *temp_obj, *press_obj, *hum_obj;
@@ -265,7 +265,7 @@ int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_mess
     printf("Topic : %s\n", topicName);
   }
 
-  parseAndStore(&app_config, payload);
+  parseAndStore(payload);
 
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);

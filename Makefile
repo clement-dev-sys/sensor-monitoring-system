@@ -61,7 +61,9 @@ clean:
 # Nettoyage complet
 cleanall: clean
 	@echo "Nettoyage complet..."
-	@rm -f $(DATA_DIR)/*.db $(DATA_DIR)/*.log $(DATA_DIR)/*.db_shm $(DATA_DIR)/*.db_wal
+	@rm -rf $(BUILD_DIR)
+	@mkdir $(BUILD_DIR)
+	@touch $(BUILD_DIR)/.gitkeep
 	@echo "Nettoyage complet terminé"
 
 # Lancer le serveur

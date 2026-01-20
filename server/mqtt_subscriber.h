@@ -60,7 +60,7 @@ void closeDatabase(void);
  * @param jsonString Chaîne JSON à parser
  * @return 0 si succès, -1 en cas d'erreur
  */
-int parseAndStore(const Config *cfg, const char *jsonString);
+int parseAndStore(const char *jsonString);
 
 /**
  * @brief Republie les données enrichies avec timestamp sur un nouveau topic

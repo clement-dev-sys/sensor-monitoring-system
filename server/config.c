@@ -84,10 +84,10 @@ int config_load(Config *cfg, const char *config_file)
     }
 
     toml_datum_t topic_republish = toml_string_in(mqtt, "topic_republish");
-    if (topic.ok)
+    if (topic_republish.ok)
     {
       strncpy(cfg->mqtt.topic_republish, topic.u.s, sizeof(cfg->mqtt.topic_republish) - 1);
-      free(topic.u.s);
+      free(topic_republish.u.s);
     }
 
     toml_datum_t client_id = toml_string_in(mqtt, "client_id");
