@@ -237,7 +237,10 @@ int republishWithTimestamp(const char *timestamp, double temp, double press, dou
   }
   else
   {
-    printf("=== Message republié ===\n");
+    if (app_config.logging.display_messages)
+    {
+      printf("=== Message republié ===\n");
+    }
   }
 
   json_object_put(json_obj);
@@ -297,6 +300,8 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
+  config_display(&app_config);
+
   char current_time[64];
   getUTCTimestamp(current_time, sizeof(current_time));
   printf("Heure système UTC : %s\n\n", current_time);
@@ -317,7 +322,7 @@ int main(int argc, char *argv[])
   printf("Connexion au broker MQTT (%s)...\n", app_config.mqtt.broker_address);
   if (MQTTClient_connect(mqtt_client, &conn_opts) != MQTTCLIENT_SUCCESS)
   {
-    printf("Échec connexion broker\n");
+    printf("  Échec connexion broker\n");
     closeDatabase();
     exit(EXIT_FAILURE);
   }
@@ -328,10 +333,7 @@ int main(int argc, char *argv[])
   MQTTClient_subscribe(mqtt_client, app_config.mqtt.topic, app_config.mqtt.qos);
   printf("  Abonné\n\n");
 
-  if (app_config.logging.display_messages)
-  {
-    printf("En attente des données ESP32...\n");
-  }
+  printf("En attente des données ESP32...\n");
 
   while (1)
   {
