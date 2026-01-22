@@ -90,6 +90,10 @@ class RealtimeTab(QWidget):
         title = QLabel("Données en Temps Réel")
         layout.addWidget(title)
         
+        # Status connection
+        self.status_label = QLabel("Status : Déconnecté")
+        layout.addWidget(self.status_label)
+        
         # Affichage des données
         data_group = QGroupBox("Données reçues")
         data_layout = QVBoxLayout()
