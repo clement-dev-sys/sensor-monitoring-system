@@ -246,20 +246,6 @@ CREATE TABLE mesures (
 );
 ```
 
-#### Fichier d'alertes
-
-```bash
-# Voir les dernières alertes
-tail -f data/alertes.log
-```
-
-**Format des alertes :**
-```
-[2025-01-02 14:23:15] ALERTE : Température trop basse (16.8°C < 17.0°C)
-[2025-01-02 14:28:20] Température revenue à la normale (17.1°C)
-[2025-01-02 15:10:45] ALERTE : Humidité trop élevée (72% > 70%)
-```
-
 ### Maintenance automatique
 
 #### Cleanup manuel
