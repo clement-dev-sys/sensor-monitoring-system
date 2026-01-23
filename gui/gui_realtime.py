@@ -3,6 +3,32 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 import paho.mqtt.client as mqtt
 import json
+import requests
+
+lat, lon = 48.856667, 2.350987
+
+#Paris : 48.856667, 2.350987
+#Marseille : 43.296482, 5.369780
+#Lille : 50.633331, 3.066670
+#Brest : 48.3903, –4.4863
+#Toulouse : 43.604652, 1.444209
+#Montréal : 45.508888, −73.561668
+#Québec : 46.813878, −71.207981
+
+url = (
+    f"https://api.open-meteo.com/v1/forecast?"
+    f"latitude={lat}&longitude={lon}"
+    f"&current_weather=true"
+    f"&hourly=pressure_msl,relativehumidity_2m"
+)
+
+response = requests.get(url)
+data = response.json()
+
+temps = data["current_weather"]["temperature"]
+heure = data["current_weather"]["time"]
+pression = data["hourly"]["pressure_msl"][0]
+humidite = data["hourly"]["relativehumidity_2m"][0]
 
 class MQTTThread(QThread):
     """Thread pour gérer la connexion MQTT sans bloquer l'interface"""
@@ -91,13 +117,20 @@ class RealtimeTab(QWidget):
         layout.addWidget(title)
         
         # Status connection
-        self.status_label = QLabel("Status : Déconnecté")
+        self.status_label = QLabel("Status BME280 : Déconnecté")
         layout.addWidget(self.status_label)
         
+        # Status connection
+        self.localisation_label = QLabel("Localisation API : X")
+        layout.addWidget(self.localisation_label)
+        
         # Affichage des données
-        data_group = QGroupBox("Données reçues")
-        data_layout = QVBoxLayout()
-        data_group.setLayout(data_layout)
+        data_layout = QHBoxLayout()
+        
+        # Affichage des données BME
+        data_group = QGroupBox("BME280")
+        data1_layout = QVBoxLayout()
+        data_group.setLayout(data1_layout)
                
         self.data_labels = []
         for i in range(4):
@@ -108,7 +141,7 @@ class RealtimeTab(QWidget):
             elif i == 1: key_label.setText("Température : ")
             elif i == 2: key_label.setText("Pression : ")
             elif i == 3: key_label.setText("Humidité : ")
-            key_label.setMinimumWidth(150)
+            key_label.setMinimumWidth(100)
             row_layout.addWidget(key_label)
 
             value_label = QLabel("-")
@@ -117,12 +150,45 @@ class RealtimeTab(QWidget):
             row_layout.addStretch()
 
             self.data_labels.append((key_label, value_label))
-            data_layout.addLayout(row_layout)
+            data1_layout.addLayout(row_layout)
       
-        layout.addWidget(data_group)
+        data_layout.addWidget(data_group)
+        
+        # Affichage des données API
+        data2_group = QGroupBox("API")
+        data2_layout = QVBoxLayout()
+        data2_group.setLayout(data2_layout)
+               
+        self.data2_labels = []
+        for i in range(4):
+            row_layout = QHBoxLayout()
+
+            key_label = QLabel("")
+            if i == 0: key_label.setText("Heure UTC : ")
+            elif i == 1: key_label.setText("Température : ")
+            elif i == 2: key_label.setText("Pression : ")
+            elif i == 3: key_label.setText("Humidité : ")
+            key_label.setMinimumWidth(100)
+            row_layout.addWidget(key_label)
+
+            value_label = QLabel("-")
+            if i == 0: value_label.setText(f"{heure}")
+            elif i == 1: value_label.setText(f"{temps} °C")
+            elif i == 2: value_label.setText(f"{pression} hPa")
+            elif i == 3: value_label.setText(f"{humidite} %")
+            row_layout.addWidget(value_label)
+            
+            row_layout.addStretch()
+
+            self.data2_labels.append((key_label, value_label))
+            data2_layout.addLayout(row_layout)
+      
+        data_layout.addWidget(data2_group)
+        
+        layout.addLayout(data_layout)
         
         # Affichage des statistiques
-        stats_group = QGroupBox("Statistiques")
+        stats_group = QGroupBox("Statistiques BME280")
         stats_layout = QVBoxLayout()
         stats_group.setLayout(stats_layout)
                
@@ -138,17 +204,17 @@ class RealtimeTab(QWidget):
             row_layout.addWidget(key_label)
             
             moy_label = QLabel("-")
-            if i == 0: moy_label.setText("Moyenne")
+            if i == 0: moy_label.setText("Moyenne :")
             moy_label.setMinimumWidth(150)
             row_layout.addWidget(moy_label)
             
             max_label = QLabel("-")
-            if i == 0: max_label.setText("Max")
+            if i == 0: max_label.setText("Max :")
             max_label.setMinimumWidth(150)
             row_layout.addWidget(max_label)
             
             min_label = QLabel("-")
-            if i == 0: min_label.setText("Min")
+            if i == 0: min_label.setText("Min :")
             row_layout.addWidget(min_label)
 
             row_layout.addStretch()
@@ -195,6 +261,7 @@ class RealtimeTab(QWidget):
     
     def update_connection_status(self, connected, message):
         self.is_connected = connected
+        self.status_label.setText("Status : " + message)
         self.status_changed.emit(connected, message)
     
     def display_message(self, message):
@@ -210,7 +277,7 @@ class RealtimeTab(QWidget):
 
             for i, (key, value) in enumerate(data.items()):
                 if i < len(self.data_labels):
-                    self.data_labels[i][1].setText(str(value))
+                    self.data_labels[i][1].setText(value)
 
                     if i != 0 and key_mapping[i]:
                         data_key = key_mapping[i]

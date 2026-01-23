@@ -90,7 +90,6 @@ class MainWindow(QMainWindow):
         
     def update_settings_connection_status(self, connected, message):
         self.settings_tab.status_label.setText(message)
-        self.realtime_tab.status_label.setText("Status : " + message)
 
         if connected:
             self.settings_tab.connect_btn.setText("Déconnecter")
