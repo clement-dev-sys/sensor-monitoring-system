@@ -43,7 +43,6 @@ int initDatabase(const Config *cfg)
 
   const char *table_sql =
       "CREATE TABLE IF NOT EXISTS mesures ("
-      "id INTEGER PRIMARY KEY AUTOINCREMENT,"
       "timestamp TEXT NOT NULL,"
       "temperature REAL,"
       "pression REAL,"
